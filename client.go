@@ -133,31 +133,9 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*htt
 		default:
 		}
 
-		// If the error type is *url.Error, sanitize its URL before returning.
-		if e, ok := err.(*url.Error); ok {
-			if url, err := url.Parse(e.URL); err == nil {
-				e.URL = sanitizeURL(url).String()
-				return nil, e
-			}
-		}
-
 		return nil, err
 	}
 	defer resp.Body.Close()
 	err = json.NewDecoder(resp.Body).Decode(v)
 	return resp, err
-}
-
-// sanitizeURL redacts the client_secret parameter from the URL which may be
-// exposed to the user.
-func sanitizeURL(uri *url.URL) *url.URL {
-	if uri == nil {
-		return nil
-	}
-	params := uri.Query()
-	if len(params.Get("client_secret")) > 0 {
-		params.Set("client_secret", "REDACTED")
-		uri.RawQuery = params.Encode()
-	}
-	return uri
 }

@@ -9,8 +9,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 func TestNewClient(t *testing.T) {
@@ -79,25 +77,6 @@ func TestDo(t *testing.T) {
 		t.Errorf("expected res to be %s got %s", expected, result)
 	}
 
-}
-
-func TestSanitizeURL(t *testing.T) {
-	tests := []struct {
-		in, want string
-	}{
-		{"/?a=b", "/?a=b"},
-		{"/?a=b&client_secret=secret", "/?a=b&client_secret=REDACTED"},
-		{"/?a=b&client_id=id&client_secret=secret", "/?a=b&client_id=id&client_secret=REDACTED"},
-	}
-
-	for _, tt := range tests {
-		inURL, _ := url.Parse(tt.in)
-		want, _ := url.Parse(tt.want)
-
-		if got := sanitizeURL(inURL); !cmp.Equal(got, want) {
-			t.Errorf("sanitizeURL(%v) returned %v, want %v", tt.in, got, want)
-		}
-	}
 }
 
 // Test that an error caused by the internal http client's Do() function
