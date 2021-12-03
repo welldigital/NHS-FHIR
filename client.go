@@ -60,6 +60,9 @@ type Client struct {
 	UserAgent string
 
 	httpClient *http.Client
+
+	common  service // Reuse a single struct instead of allocating one for each service on the heap.
+	Patient *PatientService
 }
 
 var errNonNilContext = errors.New("context must be non-nil")
@@ -81,10 +84,17 @@ func NewClient(httpClient *http.Client) *Client {
 		baseURL.Path += "/"
 	}
 
-	return &Client{
+	c := &Client{
 		BaseURL:    baseURL,
 		httpClient: httpClient,
 	}
+
+	c.common.client = c
+
+	// repeat this pattern per service...
+	c.Patient = (*PatientService)(&c.common)
+
+	return c
 }
 
 // NewRequest creates an API request. A relative URL can be provided in path,
