@@ -30,14 +30,8 @@ type Prefix string
 // Constant values for the Prefix enum.
 const (
 	EQ Prefix = "eq"
-	NE Prefix = "ne"
-	GT Prefix = "gt"
-	LT Prefix = "lt"
 	GE Prefix = "ge"
 	LE Prefix = "le"
-	SA Prefix = "sa"
-	EB Prefix = "eb"
-	AP Prefix = "ap"
 )
 
 // String returns the prefix as a string.
@@ -69,4 +63,10 @@ func (d *DateParam) EncodeValues(key string, v *url.Values) error {
 	val := d.Prefix.String() + formattedTime
 	v.Set(strings.ToLower(key), val)
 	return nil
+}
+
+// String converts DateParam to a string. Useful for logging or as parameters to other funcs
+func (d *DateParam) String() string {
+	formattedTime := d.Value.Format("2006-01-02")
+	return d.Prefix.String() + formattedTime
 }

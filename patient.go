@@ -39,33 +39,33 @@ func (p *PatientService) Get(ctx context.Context, id string) (*model.Patient, er
 
 // PatientSearchOptions is the options we pass into the request for searching a patient
 type PatientSearchOptions struct {
-	FuzzyMatch bool `url:_fuzzy-match,omitempty`
 	// A fuzzy search is performed, including checks for homophones, transposed names and historic information.
 	// You cant use wildcards with fuzzy search
-	ExactMatch bool `url:_exact-match,omitempty`
+	FuzzyMatch *bool `url:"_fuzzy-match,omitempty"`
 	// The search only returns results where the score field is 1.0. Use this with care - it is unlikely to work with fuzzy search or wildcards.
-	History bool `url:_history,omitempty`
+	ExactMatch *bool `url:"_exact-match,omitempty"`
 	// The search looks for matches in historic information such as previous names and addresses.
 	// This parameter has no effect for a fuzzy search, which always includes historic information.
-	MaxResults int `url:_max-results`
+	History *bool `url:"_history,omitempty"`
 	// For application-restricted access, this must be 1
-	Family string `url:family`
+	MaxResults int `url:"_max-results"`
 	// if used with wildcards, fuzzy match must be false. Wildcards must contain at least two characters, this matches Smith, Smythe. Not case-sensitive.
-	Given []string `url:given,omitempty`
+	Family *string `url:"family,omitempty"`
 	// The patients given name, can be used with wildcards. E.g. Jane Anne Smith
 	// Use * as a wildcard but not in the first two characters and not in fuzzy search mode
-	Gender    Gender `gender,omitempty`
-	BirthDate []DateParam
-	// Format: YYYY-MM-DD
-	DeathDate []DateParam
+	Given  *[]string `url:"given,omitempty"`
+	Gender *Gender   `url:"gender,omitempty"`
+	// Format: <eq|ge|le>yyyy-mm-dd e.g. eq2021-08-01
+	BirthDate []*string `url:"birthdate,omitempty"`
 	// For a fuzzy search, this is ignored for matching but included in the score calculation.
-	// Format: YYYY-MM-DD
-	Postcode string `url:address-postcode,omitempty`
+	// Format: <eq|ge|le>yyyy-mm-dd e.g. eq2021-08-01
+	DeathDate *[]string `url:"death-date,omitempty"`
 	// Not case sensitive. Spaces are ignored, for example LS16AE and LS1 6AE both match LS1 6AE
-	GeneralPractioner string `url:general-practitioner,omitempty`
+	Postcode *string `url:"address-postcode,omitempty"`
 	// The Organisation Data Service (ODS) code of the patient's registered GP practice.
 	// Not case sensitive. For a fuzzy search, this is ignored for matching but included in the score calculation.
 	// Example: Y12345
+	GeneralPractioner *string `url:"general-practitioner,omitempty"`
 }
 
 // Search searches for a patient in the PDS

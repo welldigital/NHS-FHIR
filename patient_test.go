@@ -752,3 +752,202 @@ func TestPatientService_Get(t *testing.T) {
 		})
 	}
 }
+
+func TestPatientService_Search(t *testing.T) {
+	type args struct {
+		ctx  context.Context
+		opts PatientSearchOptions
+	}
+	tests := []struct {
+		name    string
+		p       *PatientService
+		args    args
+		want    []*model.Patient
+		wantErr bool
+	}{
+		{
+			name: "user not found",
+			p: &service{
+				&IClientMock{
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+						return &http.Response{}, nil
+					},
+					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+						return &http.Request{}, nil
+					},
+				},
+			},
+			args: args{
+				ctx:  context.Background(),
+				opts: PatientSearchOptions{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad request",
+			p: &service{
+				&IClientMock{
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+						return &http.Response{}, nil
+					},
+					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+						return &http.Request{}, errors.New("bad request")
+					},
+				},
+			},
+			args: args{
+				ctx:  context.Background(),
+				opts: PatientSearchOptions{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad response",
+			p: &service{
+				&IClientMock{
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+						return &http.Response{}, errors.New("bad response")
+					},
+					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+						return &http.Request{}, nil
+					},
+				},
+			},
+			args: args{
+				ctx:  context.Background(),
+				opts: PatientSearchOptions{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "finds a patient",
+			p: &service{
+				&IClientMock{
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+						results := `{
+							"resourceType": "Bundle",
+							"type": "searchset",
+							"timestamp": "2021-12-08T14:29:56+00:00",
+							"total": 1,
+							"entry": [
+								{
+									"fullUrl": "https://api.service.nhs.uk/personal-demographics/FHIR/R4/Patient/9000000017",
+									"search": {
+										"score": 0.8976
+									},
+									"resource": {
+										"resourceType": "Patient",
+										"id": "9000000017",
+										"identifier": [
+											{
+												"system": "https://fhir.nhs.uk/Id/nhs-number",
+												"value": "9000000017",
+												"extension": [
+													{
+														"url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
+														"valueCodeableConcept": {
+															"coding": [
+																{
+																	"system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatus",
+																	"version": "1.0.0",
+																	"code": "01",
+																	"display": "Number present and verified"
+																}
+															]
+														}
+													}
+												]
+											}
+										],
+										"meta": {
+											"versionId": "2",
+											"security": [
+												{
+													"system": "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
+													"code": "U",
+													"display": "unrestricted"
+												}
+											]
+										}
+									}
+										
+								}
+							]
+						}`
+						r := ioutil.NopCloser(bytes.NewReader([]byte(results)))
+						err := json.NewDecoder(r).Decode(v)
+						return &http.Response{Status: "200", Body: r}, err
+					},
+					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+						assert.Equal(t, http.MethodGet, method)
+						assert.Equal(t, "Patient?_fuzzy-match=true&_max-results=1&address-postcode=M123&birthdate=lt2021-01-01&birthdate=ge2020-10-02&given=Smith", path)
+						return &http.Request{}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				opts: PatientSearchOptions{
+					MaxResults: 1,
+					FuzzyMatch: createBool(true),
+					Given:      &[]string{"Smith"},
+					BirthDate: []*string{
+						createString("lt2021-01-01"),
+						createString("ge2020-10-02"),
+					},
+					Postcode: createString("M123"),
+				},
+			},
+			wantErr: false,
+			want: []*model.Patient{
+				{
+					ResourceType: "Patient",
+					ID:           "9000000017",
+					Identifier: []model.IdentifierElement{
+						{
+							System: "https://fhir.nhs.uk/Id/nhs-number",
+							Value:  "9000000017",
+							Extension: []model.IdentifierExtension{
+								{
+									URL: "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
+									ValueCodeableConcept: model.Relationship{
+										Coding: []model.Security{
+											{
+												System:  "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatus",
+												Code:    "01",
+												Display: "Number present and verified",
+												Version: createString("1.0.0"),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					Meta: model.Meta{
+						VersionID: "2",
+						Security: []model.Security{
+							{
+								System:  "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
+								Code:    "U",
+								Display: "unrestricted",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.p.Search(tt.args.ctx, tt.args.opts)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("PatientService.Search() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("PatientService.Search() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
