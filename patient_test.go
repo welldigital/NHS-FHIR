@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -50,6 +51,42 @@ func TestPatientService_Get(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				id:  "123",
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad request",
+			p: &service{
+				client: &IClientMock{
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+						return &http.Response{}, nil
+					},
+					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+						return &http.Request{}, errors.New("bang")
+					},
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  "9000000009",
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad response",
+			p: &service{
+				&IClientMock{
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+						return &http.Response{}, errors.New("fail")
+					},
+					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+						return &http.Request{}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  "9000000009",
 			},
 			wantErr: true,
 		},
