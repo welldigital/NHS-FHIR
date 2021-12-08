@@ -1,7 +1,9 @@
 package model
 
 type FluffyExtension struct {
-	URL                  string        `json:"url"`                           
+	URL                  string        `json:"url"`
 	ValueCodeableConcept *Relationship `json:"valueCodeableConcept,omitempty"`
-	ValueDateTime        *string       `json:"valueDateTime,omitempty"`       
+	ValueDateTime        *string       `json:"valueDateTime,omitempty"`
+	ValueBoolean         *bool         `json:"valueBoolean,omitempty"`
+	ValueString          *string       `json:"valueString,omitempty"`
 }

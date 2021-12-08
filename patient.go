@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Joshswooft/nhs/cmd/validation"
 	"github.com/welldigital/NHS-FHIR/model"
 )
 
@@ -16,6 +17,10 @@ const path = "Patient"
 // Get gets a patient from the PDS using the patients NHS number as the id.
 // id = The patient's NHS number. The primary identifier of a patient, unique within NHS England and Wales. Always 10 digits and must be a valid NHS number.
 func (p *PatientService) Get(ctx context.Context, id string) (*model.Patient, error) {
+	err := validation.NhsNumberValidator(id)
+	if err != nil {
+		return nil, err
+	}
 	req, err := p.client.NewRequest(http.MethodGet, fmt.Sprintf(path+"/%v", id), nil)
 
 	if err != nil {
@@ -28,8 +33,6 @@ func (p *PatientService) Get(ctx context.Context, id string) (*model.Patient, er
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: do things with response?
 
 	return patient, nil
 }
