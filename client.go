@@ -37,6 +37,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -69,8 +70,15 @@ const (
 // To use API methods requiring auth then provide a http.Client which will perform the authentication for you e.g. oauth2
 func NewClient(httpClient *http.Client) *Client {
 	if httpClient == nil {
+		netTransport := &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout: 5 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout: 5 * time.Second,
+		}
 		httpClient = &http.Client{
-			Timeout: time.Second * 10,
+			Timeout:   time.Second * 10,
+			Transport: netTransport,
 		}
 	}
 	baseURL, _ := url.Parse(defaultBaseURL)
