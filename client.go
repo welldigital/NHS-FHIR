@@ -24,20 +24,7 @@ Example:
 			panic(err)
 		}
 
-		url := "http://foo.com/bar"
-		body := nil
-
-		req, err := c.NewRequest("GET", url, body)
-
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		// do something with req
-
-		resp, err := c.Do(req)
-
-		// handle resp etc...
+		patient, err := c.Patient.Get("9000000009")
 	}
 
 */
@@ -60,6 +47,15 @@ type Client struct {
 	UserAgent string
 
 	httpClient *http.Client
+
+	common  service // Reuse a single struct instead of allocating one for each service on the heap.
+	Patient *PatientService
+}
+
+//go:generate moq -out client_moq.go . IClient
+type IClient interface {
+	NewRequest(method, path string, body interface{}) (*http.Request, error)
+	Do(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error)
 }
 
 var errNonNilContext = errors.New("context must be non-nil")
@@ -81,10 +77,17 @@ func NewClient(httpClient *http.Client) *Client {
 		baseURL.Path += "/"
 	}
 
-	return &Client{
+	c := &Client{
 		BaseURL:    baseURL,
 		httpClient: httpClient,
 	}
+
+	c.common.client = c
+
+	// repeat this pattern per service...
+	c.Patient = (*PatientService)(&c.common)
+
+	return c
 }
 
 // NewRequest creates an API request. A relative URL can be provided in path,
