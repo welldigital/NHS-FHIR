@@ -14,7 +14,7 @@ Example:
 	package main
 
 	import (
-		"github.com/welldigital/NHS-FHIR"
+		"github.com/welldigital/nhs-fhir"
 		"fmt"
 	)
 
@@ -57,7 +57,7 @@ type Client struct {
 //go:generate moq -out client_moq.go . IClient
 type IClient interface {
 	NewRequest(method, path string, body interface{}) (*http.Request, error)
-	Do(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error)
+	Do(ctx context.Context, req *http.Request, v interface{}) (*Response, error)
 }
 
 var errNonNilContext = errors.New("context must be non-nil")
@@ -132,7 +132,7 @@ func (c *Client) NewRequest(method, path string, body interface{}) (*http.Reques
 // Do sends an API request and returns the API response. The API response is
 // JSON decoded and stored in the value pointed to by v, or returned as an
 // error if an API error has occurred.
-func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 	if ctx == nil {
 		return nil, errNonNilContext
 	}
@@ -151,5 +151,5 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*htt
 	}
 	defer resp.Body.Close()
 	err = json.NewDecoder(resp.Body).Decode(v)
-	return resp, err
+	return newResponse(resp), err
 }

@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/Joshswooft/nhs/cmd/validation"
-	"github.com/welldigital/NHS-FHIR/model"
+	"github.com/welldigital/nhs-fhir/model"
 )
 
 type PatientService = service
@@ -16,25 +16,25 @@ const path = "Patient"
 
 // Get gets a patient from the PDS using the patients NHS number as the id.
 // id = The patient's NHS number. The primary identifier of a patient, unique within NHS England and Wales. Always 10 digits and must be a valid NHS number.
-func (p *PatientService) Get(ctx context.Context, id string) (*model.Patient, error) {
+func (p *PatientService) Get(ctx context.Context, id string) (*model.Patient, *Response, error) {
 	err := validation.NhsNumberValidator(id)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	req, err := p.client.NewRequest(http.MethodGet, fmt.Sprintf(path+"/%v", id), nil)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	patient := &model.Patient{}
-	_, err = p.client.Do(ctx, req, patient)
+	resp, err := p.client.Do(ctx, req, patient)
 
 	if err != nil {
-		return nil, err
+		return nil, resp, err
 	}
 
-	return patient, nil
+	return patient, resp, nil
 }
 
 // PatientSearchOptions is the options we pass into the request for searching a patient
@@ -71,29 +71,29 @@ type PatientSearchOptions struct {
 // Search searches for a patient in the PDS
 // The behaviour of this endpoint depends on your access mode:
 //https://digital.nhs.uk/developer/api-catalogue/personal-demographics-service-fhir#api-Default-search-patient
-func (p *PatientService) Search(ctx context.Context, opts PatientSearchOptions) ([]*model.Patient, error) {
+func (p *PatientService) Search(ctx context.Context, opts PatientSearchOptions) ([]*model.Patient, *Response, error) {
 	url, err := addParamsToUrl(path, opts)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	req, err := p.client.NewRequest(http.MethodGet, url, nil)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	result := &model.Result{}
 
-	_, err = p.client.Do(ctx, req, result)
+	resp, err := p.client.Do(ctx, req, result)
 
 	if err != nil {
-		return nil, err
+		return nil, resp, err
 	}
 
 	if len(result.Entry) == 0 {
-		return nil, errors.New("user not found")
+		return nil, resp, errors.New("user not found")
 	}
 
 	patients := make([]*model.Patient, len(result.Entry))
@@ -102,6 +102,6 @@ func (p *PatientService) Search(ctx context.Context, opts PatientSearchOptions) 
 		patients[i] = &entry.Resource
 	}
 
-	return patients, nil
+	return patients, resp, nil
 
 }

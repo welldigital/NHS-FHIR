@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/NHS-FHIR.iml" filepath="$PROJECT_DIR$/.idea/NHS-FHIR.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/nhs-fhir.iml" filepath="$PROJECT_DIR$/.idea/nhs-fhir.iml" />
     </modules>
   </component>
 </project>
