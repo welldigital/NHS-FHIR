@@ -14,8 +14,9 @@ Example:
 	package main
 
 	import (
-		"github.com/welldigital/nhs-fhir"
+		client "github.com/welldigital/nhs-fhir"
 		"fmt"
+		"context"
 	)
 
 	func main() {
@@ -24,7 +25,8 @@ Example:
 			panic(err)
 		}
 
-		patient, err := c.Patient.Get("9000000009")
+		ctx := context.Background()
+		patient, err := c.Patient.Get(ctx, "9000000009")
 	}
 
 */
