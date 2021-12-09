@@ -19,7 +19,7 @@ var _ IClient = &IClientMock{}
 //
 // 		// make and configure a mocked IClient
 // 		mockedIClient := &IClientMock{
-// 			DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+// 			DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 // 				panic("mock out the Do method")
 // 			},
 // 			NewRequestFunc: func(method string, path string, body interface{}) (*http.Request, error) {
@@ -33,7 +33,7 @@ var _ IClient = &IClientMock{}
 // 	}
 type IClientMock struct {
 	// DoFunc mocks the Do method.
-	DoFunc func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error)
+	DoFunc func(ctx context.Context, req *http.Request, v interface{}) (*Response, error)
 
 	// NewRequestFunc mocks the NewRequest method.
 	NewRequestFunc func(method string, path string, body interface{}) (*http.Request, error)
@@ -64,7 +64,7 @@ type IClientMock struct {
 }
 
 // Do calls DoFunc.
-func (mock *IClientMock) Do(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+func (mock *IClientMock) Do(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 	if mock.DoFunc == nil {
 		panic("IClientMock.DoFunc: method is nil but IClient.Do was just called")
 	}

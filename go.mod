@@ -1,4 +1,4 @@
-module github.com/welldigital/NHS-FHIR
+module github.com/welldigital/nhs-fhir
 
 go 1.16
 

@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/welldigital/NHS-FHIR/model"
+	"github.com/welldigital/nhs-fhir/model"
 )
 
 func createString(s string) *string {
@@ -40,8 +40,8 @@ func TestPatientService_Get(t *testing.T) {
 			name: "invalid nhs number",
 			p: &service{
 				client: &IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
-						return &http.Response{}, nil
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+						return &Response{}, nil
 					},
 					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						return &http.Request{}, nil
@@ -58,8 +58,8 @@ func TestPatientService_Get(t *testing.T) {
 			name: "bad request",
 			p: &service{
 				client: &IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
-						return &http.Response{}, nil
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+						return &Response{}, nil
 					},
 					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						return &http.Request{}, errors.New("bang")
@@ -76,8 +76,8 @@ func TestPatientService_Get(t *testing.T) {
 			name: "bad response",
 			p: &service{
 				&IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
-						return &http.Response{}, errors.New("fail")
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+						return &Response{}, errors.New("fail")
 					},
 					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						return &http.Request{}, nil
@@ -94,7 +94,7 @@ func TestPatientService_Get(t *testing.T) {
 			name: "gets a dummy patient from sandbox",
 			p: &service{
 				client: &IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 						patient := `{
 							"resourceType": "Patient",
 							"id": "9000000009",
@@ -413,7 +413,7 @@ func TestPatientService_Get(t *testing.T) {
 						}`
 						r := ioutil.NopCloser(bytes.NewReader([]byte(patient)))
 						err := json.NewDecoder(r).Decode(v)
-						return &http.Response{Status: "200", Body: r}, err
+						return newResponse(&http.Response{Status: "200", Body: r}), err
 					},
 					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						assert.Equal(t, path, "Patient/2983396339")
@@ -741,7 +741,7 @@ func TestPatientService_Get(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			got, err := tt.p.Get(tt.args.ctx, tt.args.id)
+			got, _, err := tt.p.Get(tt.args.ctx, tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PatientService.Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -769,8 +769,8 @@ func TestPatientService_Search(t *testing.T) {
 			name: "user not found",
 			p: &service{
 				&IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
-						return &http.Response{}, nil
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+						return &Response{}, nil
 					},
 					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						return &http.Request{}, nil
@@ -787,8 +787,8 @@ func TestPatientService_Search(t *testing.T) {
 			name: "bad request",
 			p: &service{
 				&IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
-						return &http.Response{}, nil
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+						return &Response{}, nil
 					},
 					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						return &http.Request{}, errors.New("bad request")
@@ -805,8 +805,8 @@ func TestPatientService_Search(t *testing.T) {
 			name: "bad response",
 			p: &service{
 				&IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
-						return &http.Response{}, errors.New("bad response")
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+						return &Response{}, errors.New("bad response")
 					},
 					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						return &http.Request{}, nil
@@ -823,7 +823,7 @@ func TestPatientService_Search(t *testing.T) {
 			name: "finds a patient",
 			p: &service{
 				&IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 						results := `{
 							"resourceType": "Bundle",
 							"type": "searchset",
@@ -876,7 +876,7 @@ func TestPatientService_Search(t *testing.T) {
 						}`
 						r := ioutil.NopCloser(bytes.NewReader([]byte(results)))
 						err := json.NewDecoder(r).Decode(v)
-						return &http.Response{Status: "200", Body: r}, err
+						return newResponse(&http.Response{Status: "200", Body: r}), err
 					},
 					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						assert.Equal(t, http.MethodGet, method)
@@ -940,7 +940,7 @@ func TestPatientService_Search(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.p.Search(tt.args.ctx, tt.args.opts)
+			got, _, err := tt.p.Search(tt.args.ctx, tt.args.opts)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PatientService.Search() error = %v, wantErr %v", err, tt.wantErr)
 				return
