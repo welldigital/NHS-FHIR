@@ -40,6 +40,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type Client struct {
@@ -68,7 +69,9 @@ const (
 // To use API methods requiring auth then provide a http.Client which will perform the authentication for you e.g. oauth2
 func NewClient(httpClient *http.Client) *Client {
 	if httpClient == nil {
-		httpClient = &http.Client{}
+		httpClient = &http.Client{
+			Timeout: time.Second * 10,
+		}
 	}
 	baseURL, _ := url.Parse(defaultBaseURL)
 
