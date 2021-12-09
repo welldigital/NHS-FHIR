@@ -1,8 +1,6 @@
 package client
 
 import (
-	"net/url"
-	"strings"
 	"time"
 )
 
@@ -42,27 +40,6 @@ func (p Prefix) String() string {
 type DateParam struct {
 	Prefix Prefix
 	Value  time.Time
-}
-
-// EncodeValues
-/*
-	Example 1
-	// where Params is a struct containing parameters for a request
-	type p Params struct {
-		Date DateParam `url:death-date`
-	}
-
-	d := DateParam{ "eq", "2010-10-22"}
-	p := Params{Date: d}
-	v, _ := query.Values(p)
-	fmt.Print(v.Encode()) // will output: "death-date=eq2010-10-22"
-
-*/
-func (d *DateParam) EncodeValues(key string, v *url.Values) error {
-	formattedTime := d.Value.Format("2006-01-02")
-	val := d.Prefix.String() + formattedTime
-	v.Set(strings.ToLower(key), val)
-	return nil
 }
 
 // String converts DateParam to a string. Useful for logging or as parameters to other funcs
