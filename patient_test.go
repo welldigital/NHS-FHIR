@@ -40,10 +40,10 @@ func TestPatientService_Get(t *testing.T) {
 			name: "invalid nhs number",
 			p: &service{
 				client: &IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+					doFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 						return &Response{}, nil
 					},
-					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+					newRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						return &http.Request{}, nil
 					},
 				},
@@ -58,10 +58,10 @@ func TestPatientService_Get(t *testing.T) {
 			name: "bad request",
 			p: &service{
 				client: &IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+					doFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 						return &Response{}, nil
 					},
-					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+					newRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						return &http.Request{}, errors.New("bang")
 					},
 				},
@@ -76,10 +76,10 @@ func TestPatientService_Get(t *testing.T) {
 			name: "bad response",
 			p: &service{
 				&IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+					doFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 						return &Response{}, errors.New("fail")
 					},
-					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+					newRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						return &http.Request{}, nil
 					},
 				},
@@ -94,7 +94,7 @@ func TestPatientService_Get(t *testing.T) {
 			name: "gets a dummy patient from sandbox",
 			p: &service{
 				client: &IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+					doFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 						patient := `{
 							"resourceType": "Patient",
 							"id": "9000000009",
@@ -415,7 +415,7 @@ func TestPatientService_Get(t *testing.T) {
 						err := json.NewDecoder(r).Decode(v)
 						return newResponse(&http.Response{Status: "200", Body: r}), err
 					},
-					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+					newRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						assert.Equal(t, path, "Patient/2983396339")
 						url, err := url.Parse(path)
 						if err != nil {
@@ -769,10 +769,10 @@ func TestPatientService_Search(t *testing.T) {
 			name: "user not found",
 			p: &service{
 				&IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+					doFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 						return &Response{}, nil
 					},
-					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+					newRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						return &http.Request{}, nil
 					},
 				},
@@ -787,10 +787,10 @@ func TestPatientService_Search(t *testing.T) {
 			name: "bad request",
 			p: &service{
 				&IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+					doFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 						return &Response{}, nil
 					},
-					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+					newRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						return &http.Request{}, errors.New("bad request")
 					},
 				},
@@ -805,10 +805,10 @@ func TestPatientService_Search(t *testing.T) {
 			name: "bad response",
 			p: &service{
 				&IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+					doFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 						return &Response{}, errors.New("bad response")
 					},
-					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+					newRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						return &http.Request{}, nil
 					},
 				},
@@ -823,7 +823,7 @@ func TestPatientService_Search(t *testing.T) {
 			name: "finds a patient",
 			p: &service{
 				&IClientMock{
-					DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+					doFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 						results := `{
 							"resourceType": "Bundle",
 							"type": "searchset",
@@ -878,7 +878,7 @@ func TestPatientService_Search(t *testing.T) {
 						err := json.NewDecoder(r).Decode(v)
 						return newResponse(&http.Response{Status: "200", Body: r}), err
 					},
-					NewRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
+					newRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						assert.Equal(t, http.MethodGet, method)
 						assert.Equal(t, "Patient?_fuzzy-match=true&_max-results=1&address-postcode=M123&birthdate=lt2021-01-01&birthdate=ge2020-10-02&given=Smith", path)
 						return &http.Request{}, nil

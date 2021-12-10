@@ -58,8 +58,8 @@ type Client struct {
 
 //go:generate moq -out client_moq.go . IClient
 type IClient interface {
-	NewRequest(method, path string, body interface{}) (*http.Request, error)
-	Do(ctx context.Context, req *http.Request, v interface{}) (*Response, error)
+	newRequest(method, path string, body interface{}) (*http.Request, error)
+	do(ctx context.Context, req *http.Request, v interface{}) (*Response, error)
 }
 
 var errNonNilContext = errors.New("context must be non-nil")
@@ -108,7 +108,7 @@ func NewClient(httpClient *http.Client) *Client {
 // Relative URLs should always be specified without a preceding slash. If
 // specified, the value pointed to by body is JSON encoded and included as the
 // request body.
-func (c *Client) NewRequest(method, path string, body interface{}) (*http.Request, error) {
+func (c *Client) newRequest(method, path string, body interface{}) (*http.Request, error) {
 	rel := &url.URL{Path: path}
 	u := c.BaseURL.ResolveReference(rel)
 	var buf io.ReadWriter
@@ -134,7 +134,7 @@ func (c *Client) NewRequest(method, path string, body interface{}) (*http.Reques
 // Do sends an API request and returns the API response. The API response is
 // JSON decoded and stored in the value pointed to by v, or returned as an
 // error if an API error has occurred.
-func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 	if ctx == nil {
 		return nil, errNonNilContext
 	}
