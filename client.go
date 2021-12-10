@@ -52,7 +52,6 @@ type Client struct {
 
 	httpClient *http.Client
 
-	common  service // Reuse a single struct instead of allocating one for each service on the heap.
 	Patient *PatientService
 }
 
@@ -95,10 +94,8 @@ func NewClient(httpClient *http.Client) *Client {
 		httpClient: httpClient,
 	}
 
-	c.common.client = c
-
-	// repeat this pattern per service...
-	c.Patient = (*PatientService)(&c.common)
+	patientService := PatientService{client: c}
+	c.Patient = &patientService
 
 	return c
 }
