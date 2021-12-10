@@ -61,9 +61,10 @@ func TestDo(t *testing.T) {
 
 	reqWithNoBody.Header.Set("Content-Type", "application/json")
 	reqWithNoBody.Header.Set("Accept", "application/json")
+	reqWithNoBody.Header.Set("X-Request-ID", "1")
 
 	result := new(Result)
-	_, err = c.Do(ctx, reqWithNoBody, result)
+	resp, err := c.Do(ctx, reqWithNoBody, result)
 
 	if err != nil {
 		t.Errorf("expected err to be nil got %v", err)
@@ -75,6 +76,11 @@ func TestDo(t *testing.T) {
 
 	if *result != expected {
 		t.Errorf("expected res to be %s got %s", expected, result)
+	}
+
+	// response should have the request ID
+	if len(resp.RequestID) == 0 {
+		t.Errorf("expected res to contain a request ID but got none")
 	}
 
 }
@@ -135,5 +141,12 @@ func TestNewRequest(t *testing.T) {
 	// test that default user-agent is attached to the request
 	if got, want := req.Header.Get("User-Agent"), c.UserAgent; got != want {
 		t.Errorf("NewRequest() User-Agent is %v, want %v", got, want)
+	}
+
+	// test that each request contains a unique guid
+	req2, _ := c.NewRequest("GET", inURL, inBody)
+
+	if id1, id2 := req.Header.Get("X-Request-ID"), req2.Header.Get("X-Request-ID"); id1 == id2 {
+		t.Errorf("NewRequest() X-Request-ID ")
 	}
 }
