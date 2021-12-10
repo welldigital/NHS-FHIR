@@ -44,6 +44,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Client struct {
@@ -125,6 +127,8 @@ func (c *Client) newRequest(method, path string, body interface{}) (*http.Reques
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", c.UserAgent)
+	// Every request to NHS API should contain a unique id otherwise we receive a 429
+	req.Header.Set("X-Request-ID", uuid.New().String())
 	return req, nil
 }
 
@@ -150,5 +154,8 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*Res
 	}
 	defer resp.Body.Close()
 	err = json.NewDecoder(resp.Body).Decode(v)
-	return newResponse(resp), err
+
+	r := newResponse(resp)
+	r.RequestID = req.Header.Get("X-Request-ID")
+	return r, err
 }
