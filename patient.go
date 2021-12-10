@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -90,10 +89,6 @@ func (p *PatientService) Search(ctx context.Context, opts PatientSearchOptions) 
 
 	if err != nil {
 		return nil, resp, err
-	}
-
-	if len(result.Entry) == 0 {
-		return nil, resp, errors.New("user not found")
 	}
 
 	patients := make([]*model.Patient, len(result.Entry))

@@ -781,7 +781,8 @@ func TestPatientService_Search(t *testing.T) {
 				ctx:  context.Background(),
 				opts: PatientSearchOptions{},
 			},
-			wantErr: true,
+			want:    []*model.Patient{},
+			wantErr: false,
 		},
 		{
 			name: "bad request",
