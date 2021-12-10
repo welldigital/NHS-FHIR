@@ -64,7 +64,7 @@ func TestDo(t *testing.T) {
 	reqWithNoBody.Header.Set("X-Request-ID", "1")
 
 	result := new(Result)
-	resp, err := c.Do(ctx, reqWithNoBody, result)
+	resp, err := c.do(ctx, reqWithNoBody, result)
 
 	if err != nil {
 		t.Errorf("expected err to be nil got %v", err)
@@ -85,7 +85,7 @@ func TestDo(t *testing.T) {
 
 }
 
-// Test that an error caused by the internal http client's Do() function
+// Test that an error caused by the internal http client's do() function
 // does not leak the client secret.
 func TestDo_sanitizeURL(t *testing.T) {
 
@@ -101,17 +101,17 @@ func TestDo_sanitizeURL(t *testing.T) {
 	}
 	unauthedClient := NewClient(tp.Client)
 	unauthedClient.BaseURL = &url.URL{Scheme: "http", Host: "127.0.0.1:0", Path: "/"} // Use port 0 on purpose to trigger a dial TCP error, expect to get "dial tcp 127.0.0.1:0: connect: can't assign requested address".
-	req, err := unauthedClient.NewRequest("GET", ".", nil)
+	req, err := unauthedClient.newRequest("GET", ".", nil)
 	if err != nil {
-		t.Fatalf("NewRequest returned unexpected error: %v", err)
+		t.Fatalf("newRequest returned unexpected error: %v", err)
 	}
 	ctx := context.Background()
-	_, err = unauthedClient.Do(ctx, req, nil)
+	_, err = unauthedClient.do(ctx, req, nil)
 	if err == nil {
 		t.Fatal("Expected error to be returned.")
 	}
 	if strings.Contains(err.Error(), "client_secret=secret") {
-		t.Errorf("Do error contains secret, should be redacted:\n%q", err)
+		t.Errorf("do error contains secret, should be redacted:\n%q", err)
 	}
 }
 
@@ -125,26 +125,26 @@ func TestNewRequest(t *testing.T) {
 
 	inURL, outURL := "foo", defaultBaseURL+"foo"
 	inBody, outBody := &TestBody{Foo: "bar"}, `{"Foo":"bar"}`+"\n"
-	req, _ := c.NewRequest("GET", inURL, inBody)
+	req, _ := c.newRequest("GET", inURL, inBody)
 
 	// test that relative URL was expanded
 	if got, want := req.URL.String(), outURL; got != want {
-		t.Errorf("NewRequest(%q) URL is %v, want %v", inURL, got, want)
+		t.Errorf("newRequest(%q) URL is %v, want %v", inURL, got, want)
 	}
 
 	// test that body was JSON encoded
 	body, _ := ioutil.ReadAll(req.Body)
 	if got, want := string(body), outBody; got != want {
-		t.Errorf("NewRequest(%q) Body is %v, want %v", inBody, got, want)
+		t.Errorf("newRequest(%q) Body is %v, want %v", inBody, got, want)
 	}
 
 	// test that default user-agent is attached to the request
 	if got, want := req.Header.Get("User-Agent"), c.UserAgent; got != want {
-		t.Errorf("NewRequest() User-Agent is %v, want %v", got, want)
+		t.Errorf("newRequest() User-Agent is %v, want %v", got, want)
 	}
 
 	// test that each request contains a unique guid
-	req2, _ := c.NewRequest("GET", inURL, inBody)
+	req2, _ := c.newRequest("GET", inURL, inBody)
 
 	if id1, id2 := req.Header.Get("X-Request-ID"), req2.Header.Get("X-Request-ID"); id1 == id2 {
 		t.Errorf("NewRequest() X-Request-ID ")

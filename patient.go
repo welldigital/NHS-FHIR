@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -21,14 +20,14 @@ func (p *PatientService) Get(ctx context.Context, id string) (*model.Patient, *R
 	if err != nil {
 		return nil, nil, err
 	}
-	req, err := p.client.NewRequest(http.MethodGet, fmt.Sprintf(path+"/%v", id), nil)
+	req, err := p.client.newRequest(http.MethodGet, fmt.Sprintf(path+"/%v", id), nil)
 
 	if err != nil {
 		return nil, nil, err
 	}
 
 	patient := &model.Patient{}
-	resp, err := p.client.Do(ctx, req, patient)
+	resp, err := p.client.do(ctx, req, patient)
 
 	if err != nil {
 		return nil, resp, err
@@ -78,7 +77,7 @@ func (p *PatientService) Search(ctx context.Context, opts PatientSearchOptions) 
 		return nil, nil, err
 	}
 
-	req, err := p.client.NewRequest(http.MethodGet, url, nil)
+	req, err := p.client.newRequest(http.MethodGet, url, nil)
 
 	if err != nil {
 		return nil, nil, err
@@ -86,14 +85,10 @@ func (p *PatientService) Search(ctx context.Context, opts PatientSearchOptions) 
 
 	result := &model.Result{}
 
-	resp, err := p.client.Do(ctx, req, result)
+	resp, err := p.client.do(ctx, req, result)
 
 	if err != nil {
 		return nil, resp, err
-	}
-
-	if len(result.Entry) == 0 {
-		return nil, resp, errors.New("user not found")
 	}
 
 	patients := make([]*model.Patient, len(result.Entry))
