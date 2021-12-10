@@ -19,11 +19,11 @@ var _ IClient = &IClientMock{}
 //
 // 		// make and configure a mocked IClient
 // 		mockedIClient := &IClientMock{
-// 			DoFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
-// 				panic("mock out the Do method")
+// 			doFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+// 				panic("mock out the do method")
 // 			},
-// 			NewRequestFunc: func(method string, path string, body interface{}) (*http.Request, error) {
-// 				panic("mock out the NewRequest method")
+// 			newRequestFunc: func(method string, path string, body interface{}) (*http.Request, error) {
+// 				panic("mock out the newRequest method")
 // 			},
 // 		}
 //
@@ -32,16 +32,16 @@ var _ IClient = &IClientMock{}
 //
 // 	}
 type IClientMock struct {
-	// DoFunc mocks the Do method.
-	DoFunc func(ctx context.Context, req *http.Request, v interface{}) (*Response, error)
+	// doFunc mocks the do method.
+	doFunc func(ctx context.Context, req *http.Request, v interface{}) (*Response, error)
 
-	// NewRequestFunc mocks the NewRequest method.
-	NewRequestFunc func(method string, path string, body interface{}) (*http.Request, error)
+	// newRequestFunc mocks the newRequest method.
+	newRequestFunc func(method string, path string, body interface{}) (*http.Request, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// Do holds details about calls to the Do method.
-		Do []struct {
+		// do holds details about calls to the do method.
+		do []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Req is the req argument value.
@@ -49,8 +49,8 @@ type IClientMock struct {
 			// V is the v argument value.
 			V interface{}
 		}
-		// NewRequest holds details about calls to the NewRequest method.
-		NewRequest []struct {
+		// newRequest holds details about calls to the newRequest method.
+		newRequest []struct {
 			// Method is the method argument value.
 			Method string
 			// Path is the path argument value.
@@ -59,14 +59,14 @@ type IClientMock struct {
 			Body interface{}
 		}
 	}
-	lockDo         sync.RWMutex
-	lockNewRequest sync.RWMutex
+	lockdo         sync.RWMutex
+	locknewRequest sync.RWMutex
 }
 
-// Do calls DoFunc.
-func (mock *IClientMock) Do(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
-	if mock.DoFunc == nil {
-		panic("IClientMock.DoFunc: method is nil but IClient.Do was just called")
+// do calls doFunc.
+func (mock *IClientMock) do(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+	if mock.doFunc == nil {
+		panic("IClientMock.doFunc: method is nil but IClient.do was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
@@ -77,16 +77,16 @@ func (mock *IClientMock) Do(ctx context.Context, req *http.Request, v interface{
 		Req: req,
 		V:   v,
 	}
-	mock.lockDo.Lock()
-	mock.calls.Do = append(mock.calls.Do, callInfo)
-	mock.lockDo.Unlock()
-	return mock.DoFunc(ctx, req, v)
+	mock.lockdo.Lock()
+	mock.calls.do = append(mock.calls.do, callInfo)
+	mock.lockdo.Unlock()
+	return mock.doFunc(ctx, req, v)
 }
 
-// DoCalls gets all the calls that were made to Do.
+// doCalls gets all the calls that were made to do.
 // Check the length with:
-//     len(mockedIClient.DoCalls())
-func (mock *IClientMock) DoCalls() []struct {
+//     len(mockedIClient.doCalls())
+func (mock *IClientMock) doCalls() []struct {
 	Ctx context.Context
 	Req *http.Request
 	V   interface{}
@@ -96,16 +96,16 @@ func (mock *IClientMock) DoCalls() []struct {
 		Req *http.Request
 		V   interface{}
 	}
-	mock.lockDo.RLock()
-	calls = mock.calls.Do
-	mock.lockDo.RUnlock()
+	mock.lockdo.RLock()
+	calls = mock.calls.do
+	mock.lockdo.RUnlock()
 	return calls
 }
 
-// NewRequest calls NewRequestFunc.
-func (mock *IClientMock) NewRequest(method string, path string, body interface{}) (*http.Request, error) {
-	if mock.NewRequestFunc == nil {
-		panic("IClientMock.NewRequestFunc: method is nil but IClient.NewRequest was just called")
+// newRequest calls newRequestFunc.
+func (mock *IClientMock) newRequest(method string, path string, body interface{}) (*http.Request, error) {
+	if mock.newRequestFunc == nil {
+		panic("IClientMock.newRequestFunc: method is nil but IClient.newRequest was just called")
 	}
 	callInfo := struct {
 		Method string
@@ -116,16 +116,16 @@ func (mock *IClientMock) NewRequest(method string, path string, body interface{}
 		Path:   path,
 		Body:   body,
 	}
-	mock.lockNewRequest.Lock()
-	mock.calls.NewRequest = append(mock.calls.NewRequest, callInfo)
-	mock.lockNewRequest.Unlock()
-	return mock.NewRequestFunc(method, path, body)
+	mock.locknewRequest.Lock()
+	mock.calls.newRequest = append(mock.calls.newRequest, callInfo)
+	mock.locknewRequest.Unlock()
+	return mock.newRequestFunc(method, path, body)
 }
 
-// NewRequestCalls gets all the calls that were made to NewRequest.
+// newRequestCalls gets all the calls that were made to newRequest.
 // Check the length with:
-//     len(mockedIClient.NewRequestCalls())
-func (mock *IClientMock) NewRequestCalls() []struct {
+//     len(mockedIClient.newRequestCalls())
+func (mock *IClientMock) newRequestCalls() []struct {
 	Method string
 	Path   string
 	Body   interface{}
@@ -135,8 +135,8 @@ func (mock *IClientMock) NewRequestCalls() []struct {
 		Path   string
 		Body   interface{}
 	}
-	mock.lockNewRequest.RLock()
-	calls = mock.calls.NewRequest
-	mock.lockNewRequest.RUnlock()
+	mock.locknewRequest.RLock()
+	calls = mock.calls.newRequest
+	mock.locknewRequest.RUnlock()
 	return calls
 }
