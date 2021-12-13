@@ -3,7 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/welldigital/nhs-fhir.svg)](https://pkg.go.dev/github.com/welldigital/nhs-fhir)
 [![Build](https://github.com/welldigital/NHS-FHIR/actions/workflows/test.yml/badge.svg)](https://github.com/welldigital/NHS-FHIR/actions/workflows/test.yml)
 [![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
-![](https://goreportcard.com/badge/github.com/welldigital/nhs-fhir)
+[![report](https://goreportcard.com/badge/github.com/welldigital/nhs-fhir)](https://goreportcard.com/report/github.com/welldigital/nhs-fhir)
 
 
 A Go client for [NHS FHIR API](https://digital.nhs.uk/developer/api-catalogue/personal-demographics-service-fhir#top).

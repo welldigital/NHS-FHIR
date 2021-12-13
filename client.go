@@ -48,6 +48,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Client manages communication with the NHS FHIR API.
 type Client struct {
 	BaseURL   *url.URL
 	UserAgent string
@@ -58,6 +59,7 @@ type Client struct {
 }
 
 //go:generate moq -out client_moq.go . IClient
+// IClient interface for Client
 type IClient interface {
 	newRequest(method, path string, body interface{}) (*http.Request, error)
 	do(ctx context.Context, req *http.Request, v interface{}) (*Response, error)

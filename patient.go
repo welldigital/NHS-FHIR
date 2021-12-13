@@ -9,6 +9,7 @@ import (
 	"github.com/welldigital/nhs-fhir/model"
 )
 
+// PatientService service used to interact with patient details
 type PatientService = service
 
 const path = "Patient"
@@ -71,7 +72,7 @@ type PatientSearchOptions struct {
 // The behaviour of this endpoint depends on your access mode:
 //https://digital.nhs.uk/developer/api-catalogue/personal-demographics-service-fhir#api-Default-search-patient
 func (p *PatientService) Search(ctx context.Context, opts PatientSearchOptions) ([]*model.Patient, *Response, error) {
-	url, err := addParamsToUrl(path, opts)
+	url, err := addParamsToURL(path, opts)
 
 	if err != nil {
 		return nil, nil, err
