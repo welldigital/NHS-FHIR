@@ -79,13 +79,13 @@ func Test_addParamsToUrl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := addParamsToUrl(tt.args.urlString, tt.args.params)
+			got, err := addParamsToURL(tt.args.urlString, tt.args.params)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("addParamsToUrl() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("addParamsToURL() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("addParamsToUrl() = %v, want %v", got, tt.want)
+				t.Errorf("addParamsToURL() = %v, want %v", got, tt.want)
 			}
 		})
 	}

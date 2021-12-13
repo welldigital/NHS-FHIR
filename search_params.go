@@ -4,8 +4,10 @@ import (
 	"time"
 )
 
+// Gender the gender that the person is born as
 type Gender string
 
+// List of genders
 const (
 	Male    Gender = "male"
 	Female  Gender = "female"
@@ -37,6 +39,7 @@ func (p Prefix) String() string {
 	return string(p)
 }
 
+// DateParam is a struct containing a prefix and a timestamp.
 type DateParam struct {
 	Prefix Prefix
 	Value  time.Time
