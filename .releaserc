@@ -1,0 +1,9 @@
+{
+  "branches": ["main", "next", {name: 'beta', prerelease: true}, {name: 'alpha', prerelease: true}],
+  "repositoryUrl": "git@github.com:welldigital/NHS-FHIR.git",
+  "plugins": [
+    ["@semantic-release/npm", {
+      "npmPublish": false,
+    }],
+  ]
+}
