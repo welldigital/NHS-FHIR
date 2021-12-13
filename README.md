@@ -11,13 +11,15 @@ You can retrieve a patients name, date of birth, address, registered GP and much
 
 
 - [NHS-FHIR](#nhs-fhir)
-  - [Installing](#installing)
-  - [Getting started](#getting-started)
-  - [Services](#services)
-    - [Patient Service](#patient-service)
-  - [Roadmap](#roadmap)
-  - [Contributing](#contributing)
-  - [Testing](#testing)
+	- [Installing](#installing)
+	- [Getting started](#getting-started)
+	- [Services](#services)
+		- [Patient Service](#patient-service)
+	- [Roadmap](#roadmap)
+	- [Contributing](#contributing)
+	- [Testing](#testing)
+	- [Release](#release)
+		- [Pre-releases](#pre-releases)
 
 ## Installing
 
@@ -91,3 +93,30 @@ Tests are written preferably in a [table driven manner](https://mj-go.in/golang/
 Consider using interfaces as it makes the process of testing easier because we can control external parts of the system and only test the parts we are interested in. Read [this](https://nathanleclaire.com/blog/2015/10/10/interfaces-and-composition-for-effective-unit-testing-in-golang/) for more info.
 
 To assist in testing we use a tool called [moq](https://github.com/matryer/moq) which generates a struct from any interface. This then allows us to mock an interface in test code.
+
+## Release
+
+Releases are handled automatically by [semantic-release](https://github.com/semantic-release/semantic-release) which is run whenever a commit is pushed to the branch named 'main'. This is done by the github-action found in `.github/workflows/release.yml`.
+
+Semantic release requires a [github personal access token](https://github.com/settings/tokens) to make releases to protected branches.
+Your commit messages need to be in the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format e.g.
+
+```
+feat(feature-name): your message
+```
+
+or
+
+```
+fix: your message
+```
+
+- `feat` stands for feature. Other acceptable values are `feat`, `fix`, `chore`, `docs` and `BREAKING CHANGE`. This determines what version release is made.
+- `feature-name` (optional) is the name of the feature, must be lower case with no gaps. This will be included as items in the change log.
+- `your message` is the changes you've made in the commit. This will make up most of the auto generated change log.
+
+### Pre-releases
+
+This repo supports the use of pre-releases. Any work which will have a lot of breaking changes should be done on either an `alpha` or `beta` branch which are both marked as prerelease branches as shown in `.releaserc`. This is to avoid creating a lot of un-necessary versions.
+
+For more information on how pre-release branches work see the [documentation](https://semantic-release.gitbook.io/semantic-release/usage/workflow-configuration#pre-release-branches).
