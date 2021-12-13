@@ -155,6 +155,11 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*Res
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return nil, &RateLimitError{}
+	}
+
 	err = json.NewDecoder(resp.Body).Decode(v)
 
 	r := newResponse(resp)
