@@ -1,4 +1,8 @@
 # NHS-FHIR
+
+[![Build](https://github.com/welldigital/NHS-FHIR/actions/workflows/test.yml/badge.svg)](https://github.com/welldigital/NHS-FHIR/actions/workflows/test.yml)
+
+
 A Go client for [NHS FHIR API](https://digital.nhs.uk/developer/api-catalogue/personal-demographics-service-fhir#top).
 
 This client allows you to access the PDS (Patient Demographic Service) which is the national database of NHS patient details.
