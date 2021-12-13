@@ -26,7 +26,7 @@ Example:
 		}
 
 		ctx := context.Background()
-		patient, err := c.Patient.Get(ctx, "9000000009")
+		patient, _, err := c.Patient.Get(ctx, "9000000009")
 	}
 
 */
