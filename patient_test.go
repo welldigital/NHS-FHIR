@@ -526,7 +526,7 @@ func TestPatientService_Get(t *testing.T) {
 					{
 						URL: "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-DeathNotificationStatus",
 						Extension: []model.FluffyExtension{
-							model.FluffyExtension{
+							{
 								URL: "deathNotificationStatus",
 								ValueCodeableConcept: &model.Relationship{
 									Coding: []model.Security{
@@ -709,7 +709,7 @@ func TestPatientService_Get(t *testing.T) {
 					},
 				},
 				Contact: []model.Contact{
-					model.Contact{
+					{
 						ID: "C123",
 						Period: model.Period{
 							Start: "2020-01-01",
