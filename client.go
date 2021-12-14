@@ -39,20 +39,17 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
-	"strings"
-	"time"
 
 	"github.com/google/uuid"
 )
 
 // Client manages communication with the NHS FHIR API.
 type Client struct {
-	BaseURL   *url.URL
-	UserAgent string
-
+	BaseURL    *url.URL
+	UserAgent  string
+	withAuth   bool
 	httpClient *http.Client
 
 	Patient *PatientService
@@ -71,35 +68,37 @@ const (
 	defaultBaseURL = "https://sandbox.api.service.nhs.uk/personal-demographics/FHIR/R4/"
 )
 
+// NewClientWithOptions takes in some options to create the client with.
+// If no options are given then its treated the same as NewClient with nil passed as the http client.
+func NewClientWithOptions(opts ...ClientOptions) *Client {
+	c := &Client{}
+
+	if len(opts) == 0 {
+		c = NewClient(nil)
+	} else {
+		for _, opt := range opts {
+			// applies the options on the client
+			opt(c)
+		}
+	}
+
+	WithServices()(c)
+
+	return c
+}
+
 // NewClient returns a new FHIR client. If a nil httpClient is provided then a new http.client will be used.
 // To use API methods requiring auth then provide a http.Client which will perform the authentication for you e.g. oauth2
 func NewClient(httpClient *http.Client) *Client {
+	c := &Client{}
 	if httpClient == nil {
-		netTransport := &http.Transport{
-			Dial: (&net.Dialer{
-				Timeout: 5 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout: 5 * time.Second,
-		}
-		httpClient = &http.Client{
-			Timeout:   time.Second * 10,
-			Transport: netTransport,
-		}
-	}
-	baseURL, _ := url.Parse(defaultBaseURL)
-
-	// adds trailing slash
-	if !strings.HasSuffix(baseURL.Path, "/") {
-		baseURL.Path += "/"
+		WithDefaultHttpClient()(c)
 	}
 
-	c := &Client{
-		BaseURL:    baseURL,
-		httpClient: httpClient,
-	}
+	baseURL := newDefaultBaseURL()
 
-	patientService := PatientService{client: c}
-	c.Patient = &patientService
+	WithBaseUrl(baseURL)(c)
+	WithServices()(c)
 
 	return c
 }
@@ -111,7 +110,7 @@ func NewClient(httpClient *http.Client) *Client {
 // request body.
 func (c *Client) newRequest(method, path string, body interface{}) (*http.Request, error) {
 	rel := &url.URL{Path: path}
-	u := c.BaseURL.ResolveReference(rel)
+	u := c.baseURL().ResolveReference(rel)
 	var buf io.ReadWriter
 	if body != nil {
 		buf = new(bytes.Buffer)
@@ -131,6 +130,14 @@ func (c *Client) newRequest(method, path string, body interface{}) (*http.Reques
 	req.Header.Set("User-Agent", c.UserAgent)
 	// Every request to NHS API should contain a unique id otherwise we receive a 429
 	req.Header.Set("X-Request-ID", uuid.New().String())
+
+	// TODO: how do we identify that the request should be made this way?
+	if c.withAuth {
+		// TODO: add token in header
+		bearerToken := ""
+		req.Header.Set("Authorization", "Bearer "+bearerToken)
+	}
+
 	return req, nil
 }
 
@@ -142,7 +149,7 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*Res
 		return nil, errNonNilContext
 	}
 	req = req.WithContext(ctx)
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClientGetter().Do(req)
 
 	// use the error stored in context as likely to be more informative
 	if err != nil {
@@ -165,4 +172,21 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*Res
 	r := newResponse(resp)
 	r.RequestID = req.Header.Get("X-Request-ID")
 	return r, err
+}
+
+// baseURL provides a way to guarantee retrieving a baseURL
+func (c *Client) baseURL() *url.URL {
+	if c.BaseURL == nil {
+		return newDefaultBaseURL()
+	}
+	return c.BaseURL
+}
+
+// httpClientGetter provides a way to get the underlying http client
+// if the client was initialized using a struct then this guarantees that the behaviour will be normal
+func (c *Client) httpClientGetter() *http.Client {
+	if c.httpClient == nil {
+		return newDefaultHttpClient()
+	}
+	return c.httpClient
 }

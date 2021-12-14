@@ -22,6 +22,10 @@ func TestNewClient(t *testing.T) {
 	if c.httpClient == c2.httpClient {
 		t.Error("NewClient returned same http.Clients, but they should differ")
 	}
+
+	if c.Patient == nil {
+		t.Errorf("NewClient() returned nil for patient service")
+	}
 }
 
 func TestDo(t *testing.T) {
