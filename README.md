@@ -16,6 +16,7 @@ You can retrieve a patients name, date of birth, address, registered GP and much
 - [NHS-FHIR](#nhs-fhir)
 	- [Installing](#installing)
 	- [Getting started](#getting-started)
+		- [Authentication](#authentication)
 	- [Services](#services)
 		- [Patient Service](#patient-service)
 	- [Roadmap](#roadmap)
@@ -62,6 +63,31 @@ func main() {
 }
 
 ```
+
+### Authentication
+The easiest and recommended way to do this is using the oauth2 library, but you can always use any other library that provides a http.Client. If you have an OAuth2 access token you can use it like so:
+
+```
+import (
+	"golang.org/x/oauth2"
+	client "github.com/welldigital/nhs-fhir"
+)
+
+func main() {
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: "... your access token ..."},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	c := client.NewClient(tc)
+
+	p, resp, err := cli.Patient.Get(ctx, "9000000009")
+	// ...
+}
+```
+
+
 
 ## Services
 
