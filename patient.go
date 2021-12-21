@@ -12,7 +12,7 @@ import (
 // PatientService service used to interact with patient details
 type PatientService = service
 
-const path = "Patient"
+const path = "personal-demographics/FHIR/R4/Patient"
 
 // Get gets a patient from the PDS using the patients NHS number as the id.
 // id = The patient's NHS number. The primary identifier of a patient, unique within NHS England and Wales. Always 10 digits and must be a valid NHS number.

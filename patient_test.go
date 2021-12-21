@@ -416,7 +416,7 @@ func TestPatientService_Get(t *testing.T) {
 						return newResponse(&http.Response{Status: "200", Body: r}), err
 					},
 					newRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
-						assert.Equal(t, path, "Patient/2983396339")
+						assert.Equal(t, path, "personal-demographics/FHIR/R4/Patient/2983396339")
 						url, err := url.Parse(path)
 						if err != nil {
 							t.Errorf("parsing url caused an unexpected err: %v", err)
@@ -881,7 +881,7 @@ func TestPatientService_Search(t *testing.T) {
 					},
 					newRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						assert.Equal(t, http.MethodGet, method)
-						assert.Equal(t, "Patient?_fuzzy-match=true&_max-results=1&address-postcode=M123&birthdate=lt2021-01-01&birthdate=ge2020-10-02&given=Smith", path)
+						assert.Equal(t, "personal-demographics/FHIR/R4/Patient?_fuzzy-match=true&_max-results=1&address-postcode=M123&birthdate=lt2021-01-01&birthdate=ge2020-10-02&given=Smith", path)
 						return &http.Request{}, nil
 					},
 				},
