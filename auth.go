@@ -134,27 +134,3 @@ func generateSecret(config AuthConfigOptions) (*string, error) {
 	}
 	return &tokenSigned, nil
 }
-
-func parseTokenFromSignedTokenString(tokenString string) (*jwt.Token, error) {
-	publicKey, err := ioutil.ReadFile("/Users/joshdando/Documents/projects/well-digital/nhs-fhir/secret/nhs-well-dev.key.pub")
-	if err != nil {
-		return nil, fmt.Errorf("error reading public key file: %v\n", err)
-	}
-
-	key, err := jwt.ParseRSAPublicKeyFromPEM(publicKey)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing RSA public key: %v\n", err)
-	}
-
-	parsedToken, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return key, nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error parsing token: %v", err)
-	}
-
-	return parsedToken, nil
-}
