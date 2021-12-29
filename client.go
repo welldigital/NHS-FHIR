@@ -56,7 +56,7 @@ type Client struct {
 
 	Patient *PatientService
 
-	accessToken string
+	accessToken AccessTokenResponse
 	jwt         string
 	authConfig  *AuthConfigOptions
 }
@@ -207,14 +207,13 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*Res
 // instead it's advised to grab a new access token
 // https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/application-restricted-restful-apis-signed-jwt-authentication#step-8-refresh-token
 func (c *Client) getAccessToken(ctx context.Context) (string, error) {
-	// TODO: check expiry of token
-	if c.accessToken != "" {
-		return c.accessToken, nil
+	if c.accessToken.AccessToken != "" && !c.accessToken.HasExpired() {
+		return c.accessToken.AccessToken, nil
 	}
 	if c.jwt == "" {
 		jwt, err := generateSecret(*c.authConfig)
 		if err != nil {
-			return c.accessToken, err
+			return c.accessToken.AccessToken, err
 		}
 		c.jwt = *jwt
 	}
@@ -273,7 +272,7 @@ func (c *Client) generateAccessToken(ctx context.Context, jwt string) (*AccessTo
 	if err != nil {
 		return nil, res, fmt.Errorf("error generating access token: %v", err)
 	}
-
+	c.accessToken = *tokenRes
 	return tokenRes, res, err
 }
 

@@ -19,10 +19,21 @@ type AccessTokenResponse struct {
 	// AccessToken used to call NHS restricted API's
 	AccessToken string `json:"access_token"`
 	// ExpiresIn the time in seconds that the token will expire in.
-	ExpiresIn string `json:"expires_in"`
+	ExpiresIn int64 `json:"expires_in,string"`
 	// TokenType = "bearer"
 	TokenType string `json:"token_type"`
-	IssuedAt  string `json:"issued_at"`
+	// timestamp of when the token was issued in milliseconds
+	IssuedAt int64 `json:"issued_at,string"`
+}
+
+func (a AccessTokenResponse) ExpiryTime() time.Time {
+
+	return time.Unix(0, (a.IssuedAt+a.ExpiresIn)*int64(time.Millisecond))
+}
+
+func (a AccessTokenResponse) HasExpired() bool {
+	now := time.Now()
+	return now.After(a.ExpiryTime()) || now.Equal(a.ExpiryTime())
 }
 
 type AccessTokenRequest struct {
