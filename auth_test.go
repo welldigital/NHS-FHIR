@@ -25,7 +25,7 @@ func TestAccessTokenResponse_ExpiryTime(t *testing.T) {
 				ExpiresIn: 599,
 				IssuedAt:  1640774690275,
 			},
-			want: time.Date(2021, 12, 29, 10, 44, 50, 874000000, time.Local),
+			want: time.Date(2021, 12, 29, 10, 54, 49, 275*1000000, time.Local),
 		},
 	}
 	for _, tt := range tests {

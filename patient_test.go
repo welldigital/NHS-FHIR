@@ -10,10 +10,18 @@ import (
 	"net/url"
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/welldigital/nhs-fhir/model"
 )
+
+type roundTripFunc func(r *http.Request) (*http.Response, error)
+
+func (s roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return s(r)
+}
 
 func createString(s string) *string {
 	return &s
@@ -36,6 +44,52 @@ func TestPatientService_Get(t *testing.T) {
 		want    *model.Patient
 		wantErr bool
 	}{
+		{
+			wantErr: true,
+			name:    "adds authentication headers",
+			args: args{
+				ctx: context.Background(),
+				id:  "9000000009",
+			},
+			p: &service{
+				client: &Client{
+					withAuth: true,
+					BaseURL: &url.URL{
+						Scheme: "https",
+						Host:   "test.com",
+					},
+					accessToken: AccessTokenResponse{
+						AccessToken: "token",
+						ExpiresIn:   600,
+						TokenType:   "bearer",
+						IssuedAt:    time.Now().UnixNano() / int64(time.Millisecond),
+					},
+					jwt: "jwt",
+					httpClient: &http.Client{
+						Timeout: 1 * time.Millisecond,
+						Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+							if r.URL.Path == path+"/9000000009" {
+								_, keyInMap := r.Header["Authorization"]
+								if !keyInMap {
+									t.Error("expected to find Authorization header in request but didnt: ", r.Header)
+								}
+								return &http.Response{StatusCode: 401}, nil
+							}
+							return &http.Response{}, nil
+						}),
+					},
+					authConfig: &AuthConfigOptions{
+						BaseURL:  "https://test.com",
+						ClientID: "123",
+						Kid:      "1",
+						Signer: func(token *jwt.Token, key interface{}) (string, error) {
+							return "", nil
+						},
+					},
+				},
+			},
+		},
+
 		{
 			name: "invalid nhs number",
 			p: &service{

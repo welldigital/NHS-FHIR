@@ -30,7 +30,8 @@ type AccessTokenResponse struct {
 
 func (a AccessTokenResponse) ExpiryTime() time.Time {
 
-	return time.Unix(0, (a.IssuedAt+a.ExpiresIn)*int64(time.Millisecond))
+	expiresInMilliSeconds := int64(a.ExpiresIn * 1000) // 1s == 1000ms
+	return time.Unix(0, (a.IssuedAt+expiresInMilliSeconds)*int64(time.Millisecond))
 }
 
 func (a AccessTokenResponse) HasExpired() bool {
