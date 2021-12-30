@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -65,20 +67,41 @@ type AuthConfigOptions struct {
 	// Signer is a function you can use to sign your own tokens
 	Signer SigningFunc
 
-	// SigningMethod to be used when signing/verifing tokens
+	// SigningMethod to be used when signing/verifing tokens, must be RSA
 	SigningMethod jwt.SigningMethod
 }
 
+func isNil(i interface{}) bool {
+	return i == nil || reflect.ValueOf(i).IsNil()
+}
+
+var ErrBaseUrlMissing = errors.New("auth base url is missing but required")
+var ErrKidMissing = errors.New("kid is missing but required")
+var ErrClientIdMissing = errors.New("client id is missing but required")
+var ErrKeyMissing = errors.New("private key or private key file must be specified")
+var ErrInvalidSigningMethodAlg = errors.New("signing method must be RSA")
+
 func (c AuthConfigOptions) Validate() error {
-	if c.Kid == "" {
-		return errors.New("kid is missing but required")
+	if c.BaseURL == "" {
+		return ErrBaseUrlMissing
 	}
-	if c.ClientID == "" {
-		return errors.New("client id is missing but required")
+	if err := IsAbsoluteUrl(c.BaseURL); err != nil {
+		return err
 	}
 
-	if len(c.PrivateKey) == 0 && c.PrivateKeyPemFile == "" {
-		return errors.New("private key or private key file must be specified")
+	if c.Kid == "" {
+		return ErrKidMissing
+	}
+	if c.ClientID == "" {
+		return ErrClientIdMissing
+	}
+
+	if len(c.PrivateKey) == 0 && c.PrivateKeyPemFile == "" && c.Signer == nil {
+		return ErrKeyMissing
+	}
+
+	if !isNil(c.SigningMethod) && !strings.Contains(c.SigningMethod.Alg(), "RS") {
+		return ErrInvalidSigningMethodAlg
 	}
 
 	return nil
