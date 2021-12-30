@@ -86,7 +86,11 @@ func NewClientWithOptions(opts *Options) (*Client, error) {
 		return NewClient(nil), nil
 	}
 
-	c.httpClient = opts.Client
+	if opts.Client != nil {
+		c.httpClient = opts.Client
+	} else {
+		c.httpClient = newDefaultHttpClient()
+	}
 	c.UserAgent = opts.UserAgent
 
 	if opts.AuthConfigOptions != nil {

@@ -1,12 +1,15 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -153,4 +156,146 @@ func TestNewRequest(t *testing.T) {
 	if id1, id2 := req.Header.Get("X-Request-ID"), req2.Header.Get("X-Request-ID"); id1 == id2 {
 		t.Errorf("NewRequest() X-Request-ID ")
 	}
+}
+
+func TestNewClientWithOptions(t *testing.T) {
+
+	urlStr := "http://hello-world.com"
+	u, _ := url.Parse(urlStr)
+
+	type args struct {
+		opts *Options
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *Client
+		wantErr bool
+	}{
+		{
+			name: "no options is same as NewClient()",
+			args: args{
+				opts: nil,
+			},
+			want:    NewClient(nil),
+			wantErr: false,
+		},
+		{
+			name: "sets the default base url to sandbox if not given",
+			want: &Client{
+				BaseURL:    newDefaultBaseURL(),
+				httpClient: newDefaultHttpClient(),
+				withAuth:   false,
+			},
+			wantErr: false,
+		},
+		{
+			name: "sets the base url",
+			args: args{
+				opts: &Options{
+					BaseURL: urlStr,
+				},
+			},
+			want: &Client{
+				BaseURL: u,
+			},
+		},
+		{
+			name: "sets the auth config",
+			args: args{
+				opts: &Options{
+					AuthConfigOptions: &AuthConfigOptions{
+						BaseURL:           urlStr,
+						ClientID:          "123",
+						Kid:               "test",
+						PrivateKeyPemFile: "file.pem",
+					},
+				},
+			},
+			want: &Client{
+				withAuth: true,
+				authConfig: &AuthConfigOptions{
+					BaseURL:           urlStr,
+					ClientID:          "123",
+					Kid:               "test",
+					PrivateKeyPemFile: "file.pem",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewClientWithOptions(tt.args.opts)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewClientWithOptions() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.want != nil && !isClientEqual(got, tt.want) {
+				t.Errorf("NewClientWithOptions() = %v, want %v", got, tt.want)
+			}
+
+		})
+	}
+
+}
+
+func isClientEqual(got *Client, want *Client) bool {
+	if got.accessToken != want.accessToken {
+		fmt.Println("access token not equal")
+		return false
+	}
+
+	if got.jwt != want.jwt {
+		fmt.Println("jwt not equal")
+		return false
+	}
+
+	if got.withAuth != want.withAuth {
+		fmt.Println("withAuth not equal")
+		return false
+	}
+	if !reflect.DeepEqual(&got.authConfig, &want.authConfig) {
+		fmt.Println("auth config not equal")
+		return false
+	}
+
+	if !isAuthConfigEqual(got.authConfig, want.authConfig) {
+		return false
+	}
+
+	return true
+}
+
+func isAuthConfigEqual(got *AuthConfigOptions, want *AuthConfigOptions) bool {
+
+	if got == nil && want == nil {
+		return true
+	}
+
+	if got == nil && want != nil || got != nil && want == nil {
+		return false
+	}
+
+	if got.BaseURL != want.BaseURL {
+		return false
+	}
+
+	if got.ClientID != want.ClientID {
+		return false
+	}
+
+	if got.Kid != want.Kid {
+		return false
+	}
+
+	if !bytes.Equal(got.PrivateKey, want.PrivateKey) {
+		return false
+	}
+
+	if got.PrivateKeyPemFile != want.PrivateKeyPemFile {
+		return false
+	}
+
+	return true
+
 }
