@@ -135,7 +135,7 @@ import(
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/golang-jwt/jwt"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/welldigital/jwt-go-aws-kms"
+	"github.com/welldigital/jwt-go-aws-kms/jwtkms"
 	client "github.com/welldigital/nhs-fhir"
 )
 
@@ -166,7 +166,6 @@ func main() {
 			ClientID:          "your-nhs-app-id",
 			Kid:               "test-1",
 			BaseURL:           "https://int.api.service.nhs.uk",
-			PrivateKeyPemFile: "/path/to/private/key/key.pem",
 			Signer:            signerFunc,
 			SigningMethod:     jwtkms.SigningMethodRS512,
 		},
