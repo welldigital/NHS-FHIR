@@ -27,6 +27,14 @@ func TestAccessTokenResponse_ExpiryTime(t *testing.T) {
 			},
 			want: time.Date(2021, 12, 29, 10, 54, 49, 275*1000000, time.Local),
 		},
+		{
+			name: "test 2",
+			fields: fields{
+				ExpiresIn: 3600,          // 1hr in seconds
+				IssuedAt:  1640945411000, // milliseconds
+			},
+			want: time.Date(2021, 12, 31, 11, 10, 11, 0, time.Local),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
