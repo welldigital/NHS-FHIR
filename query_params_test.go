@@ -30,7 +30,6 @@ func Test_addParamsToUrl(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
 			name: "example test",
 			args: args{

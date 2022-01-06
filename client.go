@@ -41,7 +41,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
+	"os"
+	"strings"
 
 	"github.com/google/go-querystring/query"
 	"github.com/google/uuid"
@@ -56,9 +59,10 @@ type Client struct {
 
 	Patient *PatientService
 
-	accessToken AccessTokenResponse
-	jwt         string
-	authConfig  *AuthConfigOptions
+	accessToken   AccessTokenResponse
+	jwt           string
+	authConfig    *AuthConfigOptions
+	tracingConfig *TracingOptions
 }
 
 //go:generate moq -out client_moq.go . IClient
@@ -68,6 +72,7 @@ type IClient interface {
 	do(ctx context.Context, req *http.Request, v interface{}) (*Response, error)
 	postForm(ctx context.Context, url string, data url.Values, v interface{}) (*Response, error)
 	baseURLGetter() *url.URL
+	dumpHTTP(req *http.Request, resp *http.Response) error
 }
 
 var errNonNilContext = errors.New("context must be non-nil")
@@ -75,6 +80,7 @@ var errNonNilContext = errors.New("context must be non-nil")
 const (
 	sandboxURL     = "https://sandbox.api.service.nhs.uk/"
 	defaultBaseURL = sandboxURL
+	redactedString = "** REDACTED **"
 )
 
 // NewClientWithOptions takes in some options to create the client with.
@@ -96,6 +102,10 @@ func NewClientWithOptions(opts *Options) (*Client, error) {
 	if opts.AuthConfigOptions != nil {
 		c.withAuth = true
 		c.authConfig = opts.AuthConfigOptions
+	}
+
+	if opts.TracingOptions != nil {
+		c.tracingConfig = opts.TracingOptions
 	}
 
 	if opts.BaseURL != "" {
@@ -130,6 +140,59 @@ func NewClient(httpClient *http.Client) *Client {
 	c.Patient = &patientService
 
 	return c
+}
+
+// redactFieldFromHeader - replaces the field with some fixed string
+func redactFieldFromHeader(header *http.Header, field string) {
+	headerVal := header.Get(field)
+	if headerVal != "" {
+		header.Set(field, redactedString)
+	}
+}
+
+// dumpHTTP - logs both the request and response to the clients tracing output (defaults to std out).
+// additionally it scrubs the sensitive authorization bearer token from the output.
+func (c *Client) dumpHTTP(req *http.Request, resp *http.Response) error {
+	writer := c.getTraceOutputWriter()
+
+	_, err := fmt.Fprintln(writer, "||------------ BEGIN TRACE ------------||")
+	if err != nil {
+		return err
+	}
+	hasBody := resp.StatusCode == http.StatusNoContent && resp.StatusCode != http.StatusOK
+
+	// dump client outgoing request
+	redactFieldFromHeader(&req.Header, "Authorization")
+	dumpReq, err := httputil.DumpRequestOut(req, hasBody)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprint(writer, string(dumpReq))
+	if err != nil {
+		return err
+	}
+
+	// dump response
+	var dumpResp []byte
+	dumpResp, err = httputil.DumpResponse(resp, hasBody)
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprint(writer, strings.TrimSuffix(string(dumpResp), "\r\n"))
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintln(writer, "||------------ END TRACE ------------||")
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }
 
 // NewRequest creates an API request. A relative URL can be provided in path,
@@ -194,6 +257,13 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*Res
 	}
 	defer resp.Body.Close()
 
+	if c.tracingConfig != nil && c.tracingConfig.Enabled && !(c.tracingConfig.TraceErrorsOnly && resp.StatusCode == http.StatusOK) {
+
+		if err := c.dumpHTTP(req, resp); err != nil {
+			return nil, err
+		}
+	}
+
 	if resp.StatusCode == 429 {
 		return nil, &RateLimitError{}
 	}
@@ -202,7 +272,16 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*Res
 
 	r := newResponse(resp)
 	r.RequestID = req.Header.Get("X-Request-ID")
+
 	return r, err
+}
+
+func (c *Client) getTraceOutputWriter() io.Writer {
+	if c.tracingConfig == nil || c.tracingConfig.Output == nil {
+		return os.Stdout
+	} else {
+		return c.tracingConfig.Output
+	}
 }
 
 // getAccessToken return a valid access token
@@ -243,6 +322,13 @@ func (c *Client) postForm(ctx context.Context, url string, data url.Values, v in
 	}
 
 	defer resp.Body.Close()
+
+	if c.tracingConfig != nil && c.tracingConfig.Enabled && !(c.tracingConfig.TraceErrorsOnly && resp.StatusCode == http.StatusOK) {
+
+		if err := c.dumpHTTP(nil, resp); err != nil {
+			return nil, err
+		}
+	}
 
 	if resp.StatusCode == 429 {
 		return nil, &RateLimitError{}

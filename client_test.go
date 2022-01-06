@@ -12,6 +12,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewClient(t *testing.T) {
@@ -298,4 +300,96 @@ func isAuthConfigEqual(got *AuthConfigOptions, want *AuthConfigOptions) bool {
 
 	return true
 
+}
+
+func Test_redactFieldFromHeader(t *testing.T) {
+	req := httptest.NewRequest("GET", "/foo", nil)
+	field := "Auth"
+	req.Header.Set(field, "my-secret")
+
+	redactFieldFromHeader(&req.Header, field)
+
+	res := req.Header.Get(field)
+	assert.Equal(t, redactedString, res)
+
+}
+
+func TestClient_dumpHTTP(t *testing.T) {
+
+	type args struct {
+		req  *http.Request
+		resp *http.Response
+	}
+	tests := []struct {
+		name    string
+		opts    Options
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "trace",
+			opts: Options{
+				TracingOptions: &TracingOptions{
+					Enabled:         true,
+					TraceErrorsOnly: false,
+				},
+			},
+			args: args{
+				req: httptest.NewRequest(http.MethodGet, "https://google.com", nil),
+				resp: &http.Response{
+					StatusCode: http.StatusBadGateway,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "strips out Authorization header",
+			opts: Options{
+				TracingOptions: &TracingOptions{
+					Enabled:         true,
+					TraceErrorsOnly: false,
+				},
+			},
+			args: args{
+				req: httptest.NewRequest(http.MethodGet, "https://google.com", nil),
+				resp: &http.Response{
+					StatusCode: http.StatusBadRequest,
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for index, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			if index == 1 {
+				tt.args.req.Header.Add("Authorization", "my-secret")
+			}
+
+			client, err := NewClientWithOptions(&tt.opts)
+			var b bytes.Buffer
+			client.tracingConfig.Output = &b
+			if err != nil {
+				t.Errorf("couldnt init client: %v", err)
+			}
+			if err := client.dumpHTTP(tt.args.req, tt.args.resp); (err != nil) != tt.wantErr {
+				t.Errorf("Client.dumpHTTP() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			got := b.String()
+
+			_, found := tt.args.req.Header["Authorization"]
+
+			if found && !strings.Contains(got, redactedString) {
+				t.Errorf("auth header found but not redacted")
+			}
+
+			if !strings.Contains(got, fmt.Sprint(tt.args.resp.StatusCode)) {
+				t.Errorf("trace didnt output response: %v", got)
+			}
+			if !strings.Contains(got, tt.args.req.Host) {
+				t.Errorf("trace didnt output request: %v", got)
+			}
+		})
+	}
 }
