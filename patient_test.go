@@ -10,10 +10,18 @@ import (
 	"net/url"
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/welldigital/nhs-fhir/model"
 )
+
+type roundTripFunc func(r *http.Request) (*http.Response, error)
+
+func (s roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return s(r)
+}
 
 func createString(s string) *string {
 	return &s
@@ -36,6 +44,52 @@ func TestPatientService_Get(t *testing.T) {
 		want    *model.Patient
 		wantErr bool
 	}{
+		{
+			wantErr: true,
+			name:    "adds authentication headers",
+			args: args{
+				ctx: context.Background(),
+				id:  "9000000009",
+			},
+			p: &service{
+				client: &Client{
+					withAuth: true,
+					BaseURL: &url.URL{
+						Scheme: "https",
+						Host:   "test.com",
+					},
+					accessToken: AccessTokenResponse{
+						AccessToken: "token",
+						ExpiresIn:   600,
+						TokenType:   "bearer",
+						IssuedAt:    time.Now().UnixNano() / int64(time.Millisecond),
+					},
+					jwt: "jwt",
+					httpClient: &http.Client{
+						Timeout: 1 * time.Millisecond,
+						Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+							if r.URL.Path == path+"/9000000009" {
+								_, keyInMap := r.Header["Authorization"]
+								if !keyInMap {
+									t.Error("expected to find Authorization header in request but didnt: ", r.Header)
+								}
+								return &http.Response{StatusCode: 401}, nil
+							}
+							return &http.Response{}, nil
+						}),
+					},
+					authConfig: &AuthConfigOptions{
+						BaseURL:  "https://test.com",
+						ClientID: "123",
+						Kid:      "1",
+						Signer: func(token *jwt.Token, key interface{}) (string, error) {
+							return "", nil
+						},
+					},
+				},
+			},
+		},
+
 		{
 			name: "invalid nhs number",
 			p: &service{
@@ -416,7 +470,7 @@ func TestPatientService_Get(t *testing.T) {
 						return newResponse(&http.Response{Status: "200", Body: r}), err
 					},
 					newRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
-						assert.Equal(t, path, "Patient/2983396339")
+						assert.Equal(t, path, "personal-demographics/FHIR/R4/Patient/2983396339")
 						url, err := url.Parse(path)
 						if err != nil {
 							t.Errorf("parsing url caused an unexpected err: %v", err)
@@ -526,7 +580,7 @@ func TestPatientService_Get(t *testing.T) {
 					{
 						URL: "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-DeathNotificationStatus",
 						Extension: []model.FluffyExtension{
-							model.FluffyExtension{
+							{
 								URL: "deathNotificationStatus",
 								ValueCodeableConcept: &model.Relationship{
 									Coding: []model.Security{
@@ -709,7 +763,7 @@ func TestPatientService_Get(t *testing.T) {
 					},
 				},
 				Contact: []model.Contact{
-					model.Contact{
+					{
 						ID: "C123",
 						Period: model.Period{
 							Start: "2020-01-01",
@@ -881,7 +935,7 @@ func TestPatientService_Search(t *testing.T) {
 					},
 					newRequestFunc: func(method, path string, body interface{}) (*http.Request, error) {
 						assert.Equal(t, http.MethodGet, method)
-						assert.Equal(t, "Patient?_fuzzy-match=true&_max-results=1&address-postcode=M123&birthdate=lt2021-01-01&birthdate=ge2020-10-02&given=Smith", path)
+						assert.Equal(t, "personal-demographics/FHIR/R4/Patient?_fuzzy-match=true&_max-results=1&address-postcode=M123&birthdate=lt2021-01-01&birthdate=ge2020-10-02&given=Smith", path)
 						return &http.Request{}, nil
 					},
 				},

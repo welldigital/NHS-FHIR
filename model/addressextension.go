@@ -1,6 +1,6 @@
 package model
 
 type AddressExtension struct {
-	URL       string            `json:"url"`      
+	URL       string            `json:"url"`
 	Extension []PurpleExtension `json:"extension"`
 }

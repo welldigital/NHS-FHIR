@@ -6,6 +6,7 @@ package client
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"sync"
 )
 
@@ -19,11 +20,17 @@ var _ IClient = &IClientMock{}
 //
 // 		// make and configure a mocked IClient
 // 		mockedIClient := &IClientMock{
+// 			baseURLGetterFunc: func() *url.URL {
+// 				panic("mock out the baseURLGetter method")
+// 			},
 // 			doFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 // 				panic("mock out the do method")
 // 			},
 // 			newRequestFunc: func(method string, path string, body interface{}) (*http.Request, error) {
 // 				panic("mock out the newRequest method")
+// 			},
+// 			postFormFunc: func(ctx context.Context, urlMoqParam string, data url.Values, v interface{}) (*Response, error) {
+// 				panic("mock out the postForm method")
 // 			},
 // 		}
 //
@@ -32,14 +39,23 @@ var _ IClient = &IClientMock{}
 //
 // 	}
 type IClientMock struct {
+	// baseURLGetterFunc mocks the baseURLGetter method.
+	baseURLGetterFunc func() *url.URL
+
 	// doFunc mocks the do method.
 	doFunc func(ctx context.Context, req *http.Request, v interface{}) (*Response, error)
 
 	// newRequestFunc mocks the newRequest method.
 	newRequestFunc func(method string, path string, body interface{}) (*http.Request, error)
 
+	// postFormFunc mocks the postForm method.
+	postFormFunc func(ctx context.Context, urlMoqParam string, data url.Values, v interface{}) (*Response, error)
+
 	// calls tracks calls to the methods.
 	calls struct {
+		// baseURLGetter holds details about calls to the baseURLGetter method.
+		baseURLGetter []struct {
+		}
 		// do holds details about calls to the do method.
 		do []struct {
 			// Ctx is the ctx argument value.
@@ -58,9 +74,48 @@ type IClientMock struct {
 			// Body is the body argument value.
 			Body interface{}
 		}
+		// postForm holds details about calls to the postForm method.
+		postForm []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UrlMoqParam is the urlMoqParam argument value.
+			UrlMoqParam string
+			// Data is the data argument value.
+			Data url.Values
+			// V is the v argument value.
+			V interface{}
+		}
 	}
-	lockdo         sync.RWMutex
-	locknewRequest sync.RWMutex
+	lockbaseURLGetter sync.RWMutex
+	lockdo            sync.RWMutex
+	locknewRequest    sync.RWMutex
+	lockpostForm      sync.RWMutex
+}
+
+// baseURLGetter calls baseURLGetterFunc.
+func (mock *IClientMock) baseURLGetter() *url.URL {
+	if mock.baseURLGetterFunc == nil {
+		panic("IClientMock.baseURLGetterFunc: method is nil but IClient.baseURLGetter was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockbaseURLGetter.Lock()
+	mock.calls.baseURLGetter = append(mock.calls.baseURLGetter, callInfo)
+	mock.lockbaseURLGetter.Unlock()
+	return mock.baseURLGetterFunc()
+}
+
+// baseURLGetterCalls gets all the calls that were made to baseURLGetter.
+// Check the length with:
+//     len(mockedIClient.baseURLGetterCalls())
+func (mock *IClientMock) baseURLGetterCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockbaseURLGetter.RLock()
+	calls = mock.calls.baseURLGetter
+	mock.lockbaseURLGetter.RUnlock()
+	return calls
 }
 
 // do calls doFunc.
@@ -138,5 +193,48 @@ func (mock *IClientMock) newRequestCalls() []struct {
 	mock.locknewRequest.RLock()
 	calls = mock.calls.newRequest
 	mock.locknewRequest.RUnlock()
+	return calls
+}
+
+// postForm calls postFormFunc.
+func (mock *IClientMock) postForm(ctx context.Context, urlMoqParam string, data url.Values, v interface{}) (*Response, error) {
+	if mock.postFormFunc == nil {
+		panic("IClientMock.postFormFunc: method is nil but IClient.postForm was just called")
+	}
+	callInfo := struct {
+		Ctx         context.Context
+		UrlMoqParam string
+		Data        url.Values
+		V           interface{}
+	}{
+		Ctx:         ctx,
+		UrlMoqParam: urlMoqParam,
+		Data:        data,
+		V:           v,
+	}
+	mock.lockpostForm.Lock()
+	mock.calls.postForm = append(mock.calls.postForm, callInfo)
+	mock.lockpostForm.Unlock()
+	return mock.postFormFunc(ctx, urlMoqParam, data, v)
+}
+
+// postFormCalls gets all the calls that were made to postForm.
+// Check the length with:
+//     len(mockedIClient.postFormCalls())
+func (mock *IClientMock) postFormCalls() []struct {
+	Ctx         context.Context
+	UrlMoqParam string
+	Data        url.Values
+	V           interface{}
+} {
+	var calls []struct {
+		Ctx         context.Context
+		UrlMoqParam string
+		Data        url.Values
+		V           interface{}
+	}
+	mock.lockpostForm.RLock()
+	calls = mock.calls.postForm
+	mock.lockpostForm.RUnlock()
 	return calls
 }

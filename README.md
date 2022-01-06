@@ -16,6 +16,9 @@ You can retrieve a patients name, date of birth, address, registered GP and much
 - [NHS-FHIR](#nhs-fhir)
 	- [Installing](#installing)
 	- [Getting started](#getting-started)
+		- [Authentication](#authentication)
+		- [Authentication with JWT](#authentication-with-jwt)
+			- [Authentication with AWS KMS](#authentication-with-aws-kms)
 	- [Services](#services)
 		- [Patient Service](#patient-service)
 	- [Roadmap](#roadmap)
@@ -37,7 +40,7 @@ go get github.com/welldigital/nhs-fhir
 You use this library by creating a new client and calling methods on the client.
 
 
-```
+```go
 package main
 
 import (
@@ -63,6 +66,122 @@ func main() {
 
 ```
 
+### Authentication
+The easiest and recommended way to do this is using the oauth2 library, but you can always use any other library that provides a http.Client. If you have an OAuth2 access token you can use it like so:
+
+```go
+import (
+	"golang.org/x/oauth2"
+	client "github.com/welldigital/nhs-fhir"
+)
+
+func main() {
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: "... your access token ..."},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	c := client.NewClient(tc)
+
+	p, resp, err := cli.Patient.Get(ctx, "9000000009")
+	// ...
+}
+```
+
+### Authentication with JWT
+
+This example shows how you can gain access to the restricted API's (integration, prod) using your RSA private key.
+Make sure you follow the instructions outlined on the NHS [website](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/application-restricted-restful-apis-signed-jwt-authentication#step-1-create-an-application) first.
+
+```go
+
+import (
+	"log"
+	client "github.com/welldigital/nhs-fhir"
+)
+
+func main() {
+	opts := &client.Options{
+			AuthConfigOptions: &client.AuthConfigOptions{
+				ClientID:          "your-nhs-app-id",
+				Kid:               "test-1",
+				BaseURL:           "https://int.api.service.nhs.uk",
+				PrivateKeyPemFile: "path/to/private/key/key.pem",
+			},
+			BaseURL: "https://int.api.service.nhs.uk",
+	}
+	cli, err := client.NewClientWithOptions(opts)
+
+	if err != nil {
+		log.Fatalf("error init client: %v", err)
+	}
+
+	p, resp, err := cli.Patient.Get(ctx, "9449304424")
+}
+
+```
+
+#### Authentication with AWS KMS
+
+This example shows you can authenticate with the AWS Key management service (KMS) by using the KMS to sign your jwt token.
+Don't forget to pass in your aws credentials!
+
+```go
+
+import(
+	"context"
+	"log"
+	"github.com/aws/aws-sdk-go-v2/service/kms"
+	"github.com/golang-jwt/jwt"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/welldigital/jwt-go-aws-kms/jwtkms"
+	client "github.com/welldigital/nhs-fhir"
+)
+
+func Signer(config *jwtkms.Config) func(token *jwt.Token, key interface{}) (string, error) {
+	return func(token *jwt.Token, key interface{}) (string, error) {
+		return token.SignedString(config)
+	}
+}
+
+func main() {
+	awsCfg, err := config.LoadDefaultConfig(context.Background(),
+		config.WithRegion("REGION"))
+		
+	if err != nil {
+		panic(err)
+	}
+
+	kmsClient := kms.NewFromConfig(awsCfg)
+
+	ctx := context.Background()
+
+	kmsConfig := jwtkms.NewKMSConfig(kmsClient, "your private key id from kms", false)
+
+	signerFunc := Signer(kmsConfig.WithContext(ctx))
+
+	opts := &client.Options{
+		AuthConfigOptions: &client.AuthConfigOptions{
+			ClientID:          "your-nhs-app-id",
+			Kid:               "test-1",
+			BaseURL:           "https://int.api.service.nhs.uk",
+			Signer:            signerFunc,
+			SigningMethod:     jwtkms.SigningMethodRS512,
+		},
+		BaseURL: "https://int.api.service.nhs.uk",
+	}
+	cli, err := client.NewClientWithOptions(opts)
+
+	if err != nil {
+		log.Fatalf("error init client: %v", err)
+	}
+	p, resp, err := cli.Patient.Get(ctx, "9449304424")
+
+}
+
+```
+
 ## Services
 
 The client contains services which can be used to get the data you require.
@@ -76,11 +195,9 @@ The patient service contains methods for getting a patient from the PDS either u
 
 The following pieces of work still need to be done: 
 
-- [Authentication](https://digital.nhs.uk/developer/api-catalogue/personal-demographics-service-fhir#api-description__security-and-authorisation) 
 - [Updating patient details](https://digital.nhs.uk/developer/api-catalogue/personal-demographics-service-fhir#api-Default-update-patient-partial)
 - Rate limiting
 - Better Error handling
-- Handling refresh tokens
 
 ## Contributing
 
