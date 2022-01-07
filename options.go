@@ -1,6 +1,7 @@
 package client
 
 import (
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -14,6 +15,16 @@ type Options struct {
 	*AuthConfigOptions
 	BaseURL   string
 	UserAgent string
+	*TracingOptions
+}
+
+type TracingOptions struct {
+	// Enabled set to true to enable ALL tracing
+	Enabled bool
+	// TraceErrorsOnly set to true to limit tracing to errors only
+	TraceErrorsOnly bool
+	// Output allows you to configure where the log output is outputted to. Defaults to os.Stdout
+	Output io.Writer
 }
 
 func newDefaultBaseURL() *url.URL {

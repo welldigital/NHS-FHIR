@@ -26,6 +26,9 @@ var _ IClient = &IClientMock{}
 // 			doFunc: func(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 // 				panic("mock out the do method")
 // 			},
+// 			dumpHTTPFunc: func(req *http.Request, resp *http.Response) error {
+// 				panic("mock out the dumpHTTP method")
+// 			},
 // 			newRequestFunc: func(method string, path string, body interface{}) (*http.Request, error) {
 // 				panic("mock out the newRequest method")
 // 			},
@@ -44,6 +47,9 @@ type IClientMock struct {
 
 	// doFunc mocks the do method.
 	doFunc func(ctx context.Context, req *http.Request, v interface{}) (*Response, error)
+
+	// dumpHTTPFunc mocks the dumpHTTP method.
+	dumpHTTPFunc func(req *http.Request, resp *http.Response) error
 
 	// newRequestFunc mocks the newRequest method.
 	newRequestFunc func(method string, path string, body interface{}) (*http.Request, error)
@@ -64,6 +70,13 @@ type IClientMock struct {
 			Req *http.Request
 			// V is the v argument value.
 			V interface{}
+		}
+		// dumpHTTP holds details about calls to the dumpHTTP method.
+		dumpHTTP []struct {
+			// Req is the req argument value.
+			Req *http.Request
+			// Resp is the resp argument value.
+			Resp *http.Response
 		}
 		// newRequest holds details about calls to the newRequest method.
 		newRequest []struct {
@@ -88,6 +101,7 @@ type IClientMock struct {
 	}
 	lockbaseURLGetter sync.RWMutex
 	lockdo            sync.RWMutex
+	lockdumpHTTP      sync.RWMutex
 	locknewRequest    sync.RWMutex
 	lockpostForm      sync.RWMutex
 }
@@ -154,6 +168,41 @@ func (mock *IClientMock) doCalls() []struct {
 	mock.lockdo.RLock()
 	calls = mock.calls.do
 	mock.lockdo.RUnlock()
+	return calls
+}
+
+// dumpHTTP calls dumpHTTPFunc.
+func (mock *IClientMock) dumpHTTP(req *http.Request, resp *http.Response) error {
+	if mock.dumpHTTPFunc == nil {
+		panic("IClientMock.dumpHTTPFunc: method is nil but IClient.dumpHTTP was just called")
+	}
+	callInfo := struct {
+		Req  *http.Request
+		Resp *http.Response
+	}{
+		Req:  req,
+		Resp: resp,
+	}
+	mock.lockdumpHTTP.Lock()
+	mock.calls.dumpHTTP = append(mock.calls.dumpHTTP, callInfo)
+	mock.lockdumpHTTP.Unlock()
+	return mock.dumpHTTPFunc(req, resp)
+}
+
+// dumpHTTPCalls gets all the calls that were made to dumpHTTP.
+// Check the length with:
+//     len(mockedIClient.dumpHTTPCalls())
+func (mock *IClientMock) dumpHTTPCalls() []struct {
+	Req  *http.Request
+	Resp *http.Response
+} {
+	var calls []struct {
+		Req  *http.Request
+		Resp *http.Response
+	}
+	mock.lockdumpHTTP.RLock()
+	calls = mock.calls.dumpHTTP
+	mock.lockdumpHTTP.RUnlock()
 	return calls
 }
 
