@@ -15,12 +15,12 @@ func TestIsAbsoluteUrl(t *testing.T) {
 		{
 			name: "missing scheme",
 			url:  "google.com",
-			err:  ErrUrlSchemeMissing,
+			err:  ErrURLSchemeMissing,
 		},
 		{
 			name: "missing host",
 			url:  "http://",
-			err:  ErrUrlHostMissing,
+			err:  ErrURLHostMissing,
 		},
 		{
 			name: "invalid url",
@@ -35,7 +35,7 @@ func TestIsAbsoluteUrl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := IsAbsoluteUrl(tt.url)
+			got := IsAbsoluteURL(tt.url)
 			if got == nil || tt.err == nil {
 				if got != tt.err {
 					t.Errorf("got = %v, want = %v", got, tt.err)
@@ -43,7 +43,7 @@ func TestIsAbsoluteUrl(t *testing.T) {
 			} else {
 
 				if got.Error() != tt.err.Error() {
-					t.Errorf("IsAbsoluteUrl() = %v, want %v", got, tt.err)
+					t.Errorf("IsAbsoluteURL() = %v, want %v", got, tt.err)
 				}
 			}
 
