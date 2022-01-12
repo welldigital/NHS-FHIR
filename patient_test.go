@@ -680,7 +680,7 @@ func TestPatientService_Get(t *testing.T) {
 						Extension: []model.AddressExtension{
 							{
 								URL: "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-AddressKey",
-								Extension: []model.PurpleExtension{
+								Extension: []model.AddressKeyExtension{
 									{
 										URL: "type",
 										ValueCoding: &model.ValueCoding{
@@ -713,7 +713,7 @@ func TestPatientService_Get(t *testing.T) {
 						Extension: []model.AddressExtension{
 							{
 								URL: "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-AddressKey",
-								Extension: []model.PurpleExtension{
+								Extension: []model.AddressKeyExtension{
 									{
 										URL: "type",
 										ValueCoding: &model.ValueCoding{

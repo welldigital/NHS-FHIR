@@ -95,7 +95,7 @@ func NewClientWithOptions(opts *Options) (*Client, error) {
 	if opts.Client != nil {
 		c.httpClient = opts.Client
 	} else {
-		c.httpClient = newDefaultHttpClient()
+		c.httpClient = newDefaultHTTPClient()
 	}
 	c.UserAgent = opts.UserAgent
 
@@ -129,7 +129,7 @@ func NewClientWithOptions(opts *Options) (*Client, error) {
 func NewClient(httpClient *http.Client) *Client {
 	c := &Client{}
 	if httpClient == nil {
-		c.httpClient = newDefaultHttpClient()
+		c.httpClient = newDefaultHTTPClient()
 	}
 
 	baseURL := newDefaultBaseURL()
@@ -279,9 +279,8 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*Res
 func (c *Client) getTraceOutputWriter() io.Writer {
 	if c.tracingConfig == nil || c.tracingConfig.Output == nil {
 		return os.Stdout
-	} else {
-		return c.tracingConfig.Output
 	}
+	return c.tracingConfig.Output
 }
 
 // getAccessToken return a valid access token
@@ -378,7 +377,7 @@ func (c *Client) baseURLGetter() *url.URL {
 // if the client was initialized using a struct then this guarantees that the behaviour will be normal
 func (c *Client) httpClientGetter() *http.Client {
 	if c.httpClient == nil {
-		return newDefaultHttpClient()
+		return newDefaultHTTPClient()
 	}
 	return c.httpClient
 }

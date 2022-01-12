@@ -1,5 +1,6 @@
 package model
 
+// Patient patient resource
 type Patient struct {
 	ResourceType         string                `json:"resourceType"`
 	ID                   string                `json:"id"`

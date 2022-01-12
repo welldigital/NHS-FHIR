@@ -17,7 +17,7 @@ type Options struct {
 	UserAgent string
 	*TracingOptions
 }
-
+// TracingOptions the options used for debugging http requests/responses
 type TracingOptions struct {
 	// Enabled set to true to enable ALL tracing
 	Enabled bool
@@ -37,7 +37,7 @@ func newDefaultBaseURL() *url.URL {
 	return baseURL
 }
 
-func newDefaultHttpClient() *http.Client {
+func newDefaultHTTPClient() *http.Client {
 	netTransport := &http.Transport{
 		Dial: (&net.Dialer{
 			Timeout: 5 * time.Second,

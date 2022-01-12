@@ -1,5 +1,6 @@
 package model
 
+// Name information regarding the name of the patient
 type Name struct {
 	ID     string   `json:"id"`
 	Use    string   `json:"use"`

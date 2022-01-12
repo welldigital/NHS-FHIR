@@ -13,10 +13,12 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
+// Claims wrapper around jwt claims
 type Claims struct {
 	*jwt.StandardClaims
 }
 
+// AccessTokenResponse the response object from NHS when attempting to obtain an access-token
 type AccessTokenResponse struct {
 	// AccessToken used to call NHS restricted API's
 	AccessToken string `json:"access_token"`
@@ -28,17 +30,19 @@ type AccessTokenResponse struct {
 	IssuedAt int64 `json:"issued_at,string"`
 }
 
+// ExpiryTime gets the expiry time as local date
 func (a AccessTokenResponse) ExpiryTime() time.Time {
 
 	expiresInMilliSeconds := int64(a.ExpiresIn * 1000) // 1s == 1000ms
 	return time.Unix(0, (a.IssuedAt+expiresInMilliSeconds)*int64(time.Millisecond))
 }
 
+// HasExpired returns a bool indicating the expiry status of the token
 func (a AccessTokenResponse) HasExpired() bool {
 	now := time.Now()
 	return now.After(a.ExpiryTime()) || now.Equal(a.ExpiryTime())
 }
-
+// AccessTokenRequest the values required to request an access-token from the NHS
 type AccessTokenRequest struct {
 	GrantType           string `url:"grant_type"`
 	ClientAssertionType string `url:"client_assertion_type"`
@@ -75,18 +79,23 @@ type AuthConfigOptions struct {
 func isNil(i interface{}) bool {
 	return i == nil || reflect.ValueOf(i).IsNil()
 }
-
-var ErrBaseUrlMissing = errors.New("auth base url is missing but required")
+// ErrBaseURLMissing error for missing auth base url
+var ErrBaseURLMissing = errors.New("auth base url is missing but required")
+// ErrKidMissing error for missing kid
 var ErrKidMissing = errors.New("kid is missing but required")
-var ErrClientIdMissing = errors.New("client id is missing but required")
+// ErrClientIDMissing error for missing client id
+var ErrClientIDMissing = errors.New("client id is missing but required")
+// ErrKeyMissing error for missing key
 var ErrKeyMissing = errors.New("private key or private key file must be specified")
+// ErrInvalidSigningMethodAlg error for when using a signing algorithm that isnt RSA
 var ErrInvalidSigningMethodAlg = errors.New("signing method must be RSA")
 
+// Validate validates the auth config options and returns an error if it's not valid
 func (c AuthConfigOptions) Validate() error {
 	if c.BaseURL == "" {
-		return ErrBaseUrlMissing
+		return ErrBaseURLMissing
 	}
-	if err := IsAbsoluteUrl(c.BaseURL); err != nil {
+	if err := IsAbsoluteURL(c.BaseURL); err != nil {
 		return err
 	}
 
@@ -94,7 +103,7 @@ func (c AuthConfigOptions) Validate() error {
 		return ErrKidMissing
 	}
 	if c.ClientID == "" {
-		return ErrClientIdMissing
+		return ErrClientIDMissing
 	}
 
 	if len(c.PrivateKey) == 0 && c.PrivateKeyPemFile == "" && c.Signer == nil {

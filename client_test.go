@@ -186,7 +186,7 @@ func TestNewClientWithOptions(t *testing.T) {
 			name: "sets the default base url to sandbox if not given",
 			want: &Client{
 				BaseURL:    newDefaultBaseURL(),
-				httpClient: newDefaultHttpClient(),
+				httpClient: newDefaultHTTPClient(),
 				withAuth:   false,
 			},
 			wantErr: false,

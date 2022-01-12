@@ -82,7 +82,7 @@ func TestAuthConfigOptions_Validate(t *testing.T) {
 				PrivateKeyPemFile: "abc.pem",
 				PrivateKey:        []byte{},
 			},
-			err: ErrClientIdMissing,
+			err: ErrClientIDMissing,
 		},
 		{
 			name: "missing key/file with no signing func",
@@ -101,14 +101,14 @@ func TestAuthConfigOptions_Validate(t *testing.T) {
 				Kid:               "test",
 				PrivateKeyPemFile: "file.pem",
 			},
-			err: ErrBaseUrlMissing,
+			err: ErrBaseURLMissing,
 		},
 		{
 			name: "base url must be a valid url",
 			fields: fields{
 				BaseURL: "http://",
 			},
-			err: ErrUrlHostMissing,
+			err: ErrURLHostMissing,
 		},
 		{
 			name: "invalid signing method algorithm",
