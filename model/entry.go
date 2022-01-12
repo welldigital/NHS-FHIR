@@ -1,5 +1,6 @@
 package model
 
+// Entry entry point for the resource type from the FHIR spec
 type Entry struct {
 	FullURL string `json:"fullUrl"`
 	Search  Search `json:"search"`
