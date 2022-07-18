@@ -11,4 +11,4 @@ jobs:
       - name: Semantic Release
         uses: go-semantic-release/action@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CREATE_RELEASE_TOKEN }}
